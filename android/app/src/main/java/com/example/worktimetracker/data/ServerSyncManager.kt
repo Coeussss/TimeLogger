@@ -9,6 +9,7 @@ import org.json.JSONObject
 import java.io.File
 import java.net.HttpURLConnection
 import java.net.URL
+import java.util.UUID
 
 class ServerSyncManager(private val context: Context) {
 
@@ -122,8 +123,24 @@ class ServerSyncManager(private val context: Context) {
                 saveToLocalCache(responseJson)
                 Result.success(mergedLogs)
             } else {
+                val errorBody = try {
+                    conn.errorStream?.bufferedReader()?.use { it.readText() }
+                } catch (e: Exception) {
+                    null
+                }
                 conn.disconnect()
-                Result.failure(Exception("Sync failed with HTTP $responseCode"))
+
+                val detail = if (!errorBody.isNullOrBlank()) {
+                    try {
+                        val obj = JSONObject(errorBody)
+                        obj.optString("detail", obj.optString("title", errorBody))
+                    } catch (e: Exception) {
+                        errorBody
+                    }
+                } else null
+
+                val suffix = if (!detail.isNullOrBlank()) ": $detail" else ""
+                Result.failure(Exception("Sync failed with HTTP $responseCode$suffix"))
             }
         } catch (e: Exception) {
             Result.failure(e)
@@ -202,7 +219,8 @@ class ServerSyncManager(private val context: Context) {
         val arr = JSONArray()
         for (log in logs) {
             val obj = JSONObject()
-            obj.put("Id", log.id)
+            val validId = if (log.id.isNotBlank()) log.id else UUID.randomUUID().toString()
+            obj.put("Id", validId)
             obj.put("Timestamp", log.timestamp)
             obj.put("Duration", log.duration)
             obj.put("Category", log.category)

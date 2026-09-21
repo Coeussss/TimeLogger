@@ -5,6 +5,7 @@ services:
       dockerfile: Dockerfile
     container_name: worktimetracker-server
     restart: unless-stopped
+    user: "0:0"
     ports:
       - "${PORT:-48291}:8080"
     environment:

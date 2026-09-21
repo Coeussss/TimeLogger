@@ -44,18 +44,20 @@ List<TimeLogDto> LoadLogs()
     }
 }
 
-// Helper to save logs safely and atomically
+// Helper to save logs safely and reliably
 void SaveLogs(List<TimeLogDto> logs)
 {
     lock (fileLock)
     {
         try
         {
+            if (!Directory.Exists(dataDir))
+            {
+                Directory.CreateDirectory(dataDir);
+            }
             var options = new JsonSerializerOptions { WriteIndented = true };
             var json = JsonSerializer.Serialize(logs, options);
-            var tempPath = dataFilePath + ".tmp";
-            File.WriteAllText(tempPath, json);
-            File.Move(tempPath, dataFilePath, true);
+            File.WriteAllText(dataFilePath, json);
         }
         catch (Exception ex)
         {
@@ -147,7 +149,19 @@ app.MapPost("/api/logs", async (HttpContext ctx) =>
     }
 
     var merged = dict.Values.OrderByDescending(l => l.Timestamp).ToList();
-    SaveLogs(merged);
+    try
+    {
+        SaveLogs(merged);
+    }
+    catch (Exception ex)
+    {
+        app.Logger.LogError(ex, "Failed to save logs to {Path}", dataFilePath);
+        return Results.Problem(
+            statusCode: 500,
+            title: "Database write error",
+            detail: $"Server failed to write to '{dataFilePath}': {ex.Message}. Check directory permissions on the host."
+        );
+    }
 
     return Results.Ok(new { message = "Saved successfully", count = merged.Count, updated = incomingLogs.Count });
 });
@@ -199,7 +213,19 @@ app.MapPost("/api/logs/sync", async (HttpContext ctx) =>
     }
 
     var result = mergedDict.Values.OrderByDescending(l => l.Timestamp).ToList();
-    SaveLogs(result);
+    try
+    {
+        SaveLogs(result);
+    }
+    catch (Exception ex)
+    {
+        app.Logger.LogError(ex, "Failed to save logs to {Path} during sync", dataFilePath);
+        return Results.Problem(
+            statusCode: 500,
+            title: "Database write error",
+            detail: $"Server failed to write to '{dataFilePath}': {ex.Message}. Check file permissions for {dataDir} on the host."
+        );
+    }
 
     return Results.Ok(result);
 });
@@ -213,7 +239,19 @@ app.MapDelete("/api/logs/{id:guid}", (Guid id, HttpContext ctx) =>
     var removed = existing.RemoveAll(l => l.Id == id);
     if (removed > 0)
     {
-        SaveLogs(existing);
+        try
+        {
+            SaveLogs(existing);
+        }
+        catch (Exception ex)
+        {
+            app.Logger.LogError(ex, "Failed to save logs after delete to {Path}", dataFilePath);
+            return Results.Problem(
+                statusCode: 500,
+                title: "Database write error",
+                detail: $"Server failed to write to '{dataFilePath}': {ex.Message}. Check file permissions for {dataDir} on the host."
+            );
+        }
         return Results.Ok(new { message = "Log deleted", id });
     }
 

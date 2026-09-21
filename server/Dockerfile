@@ -13,7 +13,7 @@ FROM mcr.microsoft.com/dotnet/aspnet:8.0-alpine AS final
 WORKDIR /app
 
 # Create persistent data directory
-RUN mkdir -p /app/data && chown -R $APP_UID:$APP_UID /app/data
+RUN mkdir -p /app/data && chmod 777 /app/data
 
 COPY --from=build /app/publish .
 
@@ -23,5 +23,4 @@ ENV API_KEY=changeme_worktimetracker_key
 
 EXPOSE 8080
 
-USER $APP_UID
 ENTRYPOINT ["dotnet", "WorkTimeTracker.Server.dll"]
