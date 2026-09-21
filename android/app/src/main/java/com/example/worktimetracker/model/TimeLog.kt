@@ -1,6 +1,10 @@
 package com.example.worktimetracker.model
 
+import java.time.Instant
+import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.OffsetDateTime
+import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.UUID
 
@@ -25,10 +29,45 @@ data class TimeLog(
 
     fun getDurationHours(): Double = getDurationMinutes() / 60.0
 
+    fun toLocalDateTime(): LocalDateTime {
+        if (timestamp.isBlank()) return LocalDateTime.now()
+
+        // 1. If timestamp has zone offset or Z (e.g., 2026-09-21T21:40:00Z or +01:00)
+        try {
+            return OffsetDateTime.parse(timestamp).atZoneSameInstant(ZoneId.systemDefault()).toLocalDateTime()
+        } catch (e: Exception) { }
+
+        // 2. Try Instant
+        try {
+            return Instant.parse(timestamp).atZone(ZoneId.systemDefault()).toLocalDateTime()
+        } catch (e: Exception) { }
+
+        // 3. Try standard ISO Local Date Time (e.g. 2026-09-21T21:40:00)
+        try {
+            return LocalDateTime.parse(timestamp, DateTimeFormatter.ISO_DATE_TIME)
+        } catch (e: Exception) { }
+
+        try {
+            return LocalDateTime.parse(timestamp, DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+        } catch (e: Exception) { }
+
+        // 4. Try normalized string
+        try {
+            val clean = timestamp.trim().trimEnd('Z').replace(' ', 'T')
+            return LocalDateTime.parse(clean)
+        } catch (e: Exception) { }
+
+        return LocalDateTime.now()
+    }
+
     fun getDisplayTime(): String {
         return try {
-            val ldt = LocalDateTime.parse(timestamp, DateTimeFormatter.ISO_LOCAL_DATE_TIME)
-            ldt.format(DateTimeFormatter.ofPattern("h:mm a"))
+            val ldt = toLocalDateTime()
+            if (ldt.toLocalDate() == LocalDate.now()) {
+                ldt.format(DateTimeFormatter.ofPattern("h:mm a"))
+            } else {
+                ldt.format(DateTimeFormatter.ofPattern("MMM d, h:mm a"))
+            }
         } catch (e: Exception) {
             timestamp
         }
@@ -36,8 +75,8 @@ data class TimeLog(
 
     fun isToday(): Boolean {
         return try {
-            val logDate = LocalDateTime.parse(timestamp, DateTimeFormatter.ISO_LOCAL_DATE_TIME).toLocalDate()
-            logDate == java.time.LocalDate.now()
+            val ldt = toLocalDateTime()
+            ldt.toLocalDate() == LocalDate.now()
         } catch (e: Exception) {
             false
         }

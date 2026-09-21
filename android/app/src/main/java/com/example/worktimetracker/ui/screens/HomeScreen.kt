@@ -68,6 +68,7 @@ fun HomeScreen(viewModel: TimeTrackerViewModel) {
     val isRefreshing by viewModel.isRefreshing.collectAsState()
 
     val todayLogs = remember(allLogs) { allLogs.filter { it.isToday() } }
+    val pastLogs = remember(allLogs) { allLogs.filter { !it.isToday() } }
     val todayHours = remember(todayLogs) { todayLogs.sumOf { it.getDurationHours() } }
     val targetMet = todayHours >= 7.5
 
@@ -406,6 +407,22 @@ fun HomeScreen(viewModel: TimeTrackerViewModel) {
                     }
                 } else {
                     items(todayLogs, key = { it.id }) { log ->
+                        LogItemRow(log = log, onDelete = { viewModel.deleteLog(log.id) })
+                    }
+                }
+
+                if (pastLogs.isNotEmpty()) {
+                    item {
+                        Text(
+                            "PREVIOUS LOGGED BLOCKS (${pastLogs.size})",
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF666666),
+                            modifier = Modifier.padding(top = 10.dp)
+                        )
+                    }
+
+                    items(pastLogs, key = { it.id }) { log ->
                         LogItemRow(log = log, onDelete = { viewModel.deleteLog(log.id) })
                     }
                 }

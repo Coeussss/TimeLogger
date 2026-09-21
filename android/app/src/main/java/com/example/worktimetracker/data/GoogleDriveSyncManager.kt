@@ -113,6 +113,16 @@ class GoogleDriveSyncManager(private val context: Context) {
         }
     }
 
+    private fun getField(obj: JSONObject, vararg keys: String): String {
+        for (k in keys) {
+            if (obj.has(k) && !obj.isNull(k)) {
+                val v = obj.optString(k, "")
+                if (v.isNotBlank()) return v
+            }
+        }
+        return ""
+    }
+
     private fun parseJson(json: String): List<TimeLog> {
         if (json.isBlank()) return emptyList()
         val list = mutableListOf<TimeLog>()
@@ -120,11 +130,11 @@ class GoogleDriveSyncManager(private val context: Context) {
             val arr = JSONArray(json)
             for (i in 0 until arr.length()) {
                 val obj = arr.getJSONObject(i)
-                val id = obj.optString("Id", obj.optString("id", ""))
-                val timestamp = obj.optString("Timestamp", obj.optString("timestamp", ""))
-                val duration = obj.optString("Duration", obj.optString("duration", "00:30:00"))
-                val category = obj.optString("Category", obj.optString("category", ""))
-                val description = obj.optString("Description", obj.optString("description", ""))
+                val id = getField(obj, "id", "Id", "ID")
+                val timestamp = getField(obj, "timestamp", "Timestamp")
+                val duration = getField(obj, "duration", "Duration").ifBlank { "00:30:00" }
+                val category = getField(obj, "category", "Category")
+                val description = getField(obj, "description", "Description")
 
                 if (id.isNotBlank()) {
                     list.add(TimeLog(id, timestamp, duration, category, description))
