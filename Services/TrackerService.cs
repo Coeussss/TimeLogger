@@ -10,19 +10,24 @@ namespace WorkTimeTracker.Services
         private readonly DispatcherTimer _timer;
         private TimeSpan _interval = TimeSpan.FromMinutes(30);
         private TimeSpan _timeRemaining;
-        private bool _isRunning;
-        private DateTime _cycleStartTime;
+        private bool _isRunning = true;
+        private DateTime? _snoozeUntil;
+        private DateTime? _lastTriggeredBoundary;
+        private DateTime? _currentTargetBoundary;
 
         public event Action? PromptRequested;
 
         public TrackerService()
         {
-            _timeRemaining = _interval;
             _timer = new DispatcherTimer
             {
                 Interval = TimeSpan.FromSeconds(1)
             };
             _timer.Tick += OnTimerTick;
+
+            // Immediately link and synchronize to real wall-clock half-hour boundary
+            _currentTargetBoundary = GetNextHalfHourBoundary(DateTime.Now);
+            UpdateTimeRemainingFromClock();
         }
 
         public TimeSpan Interval
@@ -33,7 +38,6 @@ namespace WorkTimeTracker.Services
                 if (_interval != value)
                 {
                     _interval = value;
-                    Reset();
                     OnPropertyChanged();
                     OnPropertyChanged(nameof(IntervalDisplay));
                 }
@@ -100,9 +104,13 @@ namespace WorkTimeTracker.Services
         {
             if (!_isRunning)
             {
-                _cycleStartTime = DateTime.Now;
-                _timer.Start();
                 IsRunning = true;
+                UpdateTimeRemainingFromClock();
+                _timer.Start();
+            }
+            else if (!_timer.IsEnabled)
+            {
+                _timer.Start();
             }
         }
 
@@ -110,53 +118,96 @@ namespace WorkTimeTracker.Services
         {
             if (_isRunning)
             {
-                _timer.Stop();
                 IsRunning = false;
             }
         }
 
         public void Reset()
         {
-            _timer.Stop();
-            IsRunning = false;
-            TimeRemaining = _interval;
+            _snoozeUntil = null;
+            _interval = TimeSpan.FromMinutes(30);
+            UpdateTimeRemainingFromClock();
         }
 
         public void Snooze(TimeSpan duration)
         {
-            _timer.Stop();
-            TimeRemaining = duration;
+            _snoozeUntil = DateTime.Now.Add(duration);
             _interval = duration;
-            _timer.Start();
+            TimeRemaining = duration;
             IsRunning = true;
+            if (!_timer.IsEnabled) _timer.Start();
         }
 
         public void TriggerPromptNow()
         {
             PromptRequested?.Invoke();
-            // Reset for next cycle
+            _snoozeUntil = null;
             _interval = TimeSpan.FromMinutes(30);
-            TimeRemaining = _interval;
-            if (_isRunning)
-            {
-                _cycleStartTime = DateTime.Now;
-            }
+            UpdateTimeRemainingFromClock();
         }
 
         private void OnTimerTick(object? sender, EventArgs e)
         {
-            if (TimeRemaining > TimeSpan.FromSeconds(1))
+            if (!_isRunning) return;
+
+            DateTime now = DateTime.Now;
+
+            // Handle active snooze
+            if (_snoozeUntil.HasValue)
             {
-                TimeRemaining -= TimeSpan.FromSeconds(1);
+                var diff = _snoozeUntil.Value - now;
+                if (diff <= TimeSpan.Zero)
+                {
+                    _snoozeUntil = null;
+                    _interval = TimeSpan.FromMinutes(30);
+                    PromptRequested?.Invoke();
+                    UpdateTimeRemainingFromClock();
+                }
+                else
+                {
+                    TimeRemaining = TimeSpan.FromSeconds(Math.Ceiling(diff.TotalSeconds));
+                }
+                return;
+            }
+
+            // Real wall-clock half-hour boundary tracking (:00 and :30)
+            var nextBoundary = GetNextHalfHourBoundary(now);
+
+            // Check if boundary was crossed
+            if (_currentTargetBoundary.HasValue && now >= _currentTargetBoundary.Value)
+            {
+                if (_lastTriggeredBoundary != _currentTargetBoundary.Value)
+                {
+                    _lastTriggeredBoundary = _currentTargetBoundary.Value;
+                    PromptRequested?.Invoke();
+                }
+            }
+
+            _currentTargetBoundary = nextBoundary;
+            var remainingDiff = nextBoundary - now;
+            var seconds = Math.Max(0, Math.Ceiling(remainingDiff.TotalSeconds));
+            TimeRemaining = TimeSpan.FromSeconds(seconds);
+        }
+
+        private void UpdateTimeRemainingFromClock()
+        {
+            DateTime now = DateTime.Now;
+            var nextBoundary = GetNextHalfHourBoundary(now);
+            _currentTargetBoundary = nextBoundary;
+            var remainingDiff = nextBoundary - now;
+            var seconds = Math.Max(0, Math.Ceiling(remainingDiff.TotalSeconds));
+            TimeRemaining = TimeSpan.FromSeconds(seconds);
+        }
+
+        public static DateTime GetNextHalfHourBoundary(DateTime now)
+        {
+            if (now.Minute < 30)
+            {
+                return new DateTime(now.Year, now.Month, now.Day, now.Hour, 30, 0, now.Kind);
             }
             else
             {
-                TimeRemaining = TimeSpan.Zero;
-                // Interval completed! Trigger prompt
-                PromptRequested?.Invoke();
-                // Reset interval back to standard 30 minutes if it was snoozed
-                _interval = TimeSpan.FromMinutes(30);
-                TimeRemaining = _interval;
+                return new DateTime(now.Year, now.Month, now.Day, now.Hour, 0, 0, now.Kind).AddHours(1);
             }
         }
 

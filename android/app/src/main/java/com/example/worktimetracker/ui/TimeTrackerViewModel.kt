@@ -33,7 +33,11 @@ class TimeTrackerViewModel(application: Application) : AndroidViewModel(applicat
     val serverSyncManager = ServerSyncManager(application)
     private val notificationHelper = IntervalNotificationHelper(application)
 
-    private val _timeRemaining = MutableStateFlow(1800) // 30 mins in seconds
+    private var snoozeUntil: LocalDateTime? = null
+    private var lastTriggeredBoundary: LocalDateTime? = null
+    private var currentTargetBoundary: LocalDateTime? = null
+
+    private val _timeRemaining = MutableStateFlow(getRemainingSecondsInCurrentHalfHour()) // Initialized directly from clock!
     val timeRemaining: StateFlow<Int> = _timeRemaining.asStateFlow()
 
     private val _isRunning = MutableStateFlow(true)
@@ -66,6 +70,7 @@ class TimeTrackerViewModel(application: Application) : AndroidViewModel(applicat
     private var timerJob: Job? = null
 
     init {
+        currentTargetBoundary = getNextHalfHourBoundary(LocalDateTime.now())
         refreshLogs()
         startTimer()
     }
@@ -89,22 +94,60 @@ class TimeTrackerViewModel(application: Application) : AndroidViewModel(applicat
         prefs.edit().putString("sync_mode", mode.name).apply()
     }
 
+    fun getNextHalfHourBoundary(now: LocalDateTime = LocalDateTime.now()): LocalDateTime {
+        return if (now.minute < 30) {
+            now.withMinute(30).withSecond(0).withNano(0)
+        } else {
+            now.plusHours(1).withMinute(0).withSecond(0).withNano(0)
+        }
+    }
+
+    fun getRemainingSecondsInCurrentHalfHour(now: LocalDateTime = LocalDateTime.now()): Int {
+        val snooze = snoozeUntil
+        if (snooze != null) {
+            val diff = java.time.Duration.between(now, snooze).seconds
+            if (diff > 0) return diff.toInt()
+            snoozeUntil = null
+        }
+
+        val next = getNextHalfHourBoundary(now)
+        val diff = java.time.Duration.between(now, next).seconds
+        return diff.coerceAtLeast(0).toInt()
+    }
+
     fun startTimer() {
         _isRunning.value = true
         timerJob?.cancel()
         timerJob = viewModelScope.launch {
             while (isActive) {
-                delay(1000)
+                val now = LocalDateTime.now()
                 if (_isRunning.value) {
-                    if (_timeRemaining.value > 1) {
-                        _timeRemaining.value -= 1
+                    val snooze = snoozeUntil
+                    if (snooze != null) {
+                        val diff = java.time.Duration.between(now, snooze).seconds
+                        if (diff <= 0) {
+                            snoozeUntil = null
+                            _showPromptDialog.value = true
+                            notificationHelper.showCheckInNotification()
+                            _timeRemaining.value = getRemainingSecondsInCurrentHalfHour(now)
+                        } else {
+                            _timeRemaining.value = diff.toInt()
+                        }
                     } else {
-                        // Interval completed!
-                        _timeRemaining.value = 1800
-                        _showPromptDialog.value = true
-                        notificationHelper.showCheckInNotification()
+                        val nextBoundary = getNextHalfHourBoundary(now)
+                        val target = currentTargetBoundary
+                        if (target != null && (now.isEqual(target) || now.isAfter(target)) && lastTriggeredBoundary != target) {
+                            lastTriggeredBoundary = target
+                            _showPromptDialog.value = true
+                            notificationHelper.showCheckInNotification()
+                        }
+                        currentTargetBoundary = nextBoundary
+
+                        val diff = java.time.Duration.between(now, nextBoundary).seconds
+                        _timeRemaining.value = diff.coerceAtLeast(0).toInt()
                     }
                 }
+                delay(1000)
             }
         }
     }
@@ -114,8 +157,9 @@ class TimeTrackerViewModel(application: Application) : AndroidViewModel(applicat
     }
 
     fun resetTimer() {
-        _timeRemaining.value = 1800
-        _isRunning.value = false
+        snoozeUntil = null
+        _isRunning.value = true
+        _timeRemaining.value = getRemainingSecondsInCurrentHalfHour()
     }
 
     fun openPromptDialog() {
@@ -135,6 +179,7 @@ class TimeTrackerViewModel(application: Application) : AndroidViewModel(applicat
     }
 
     fun snooze5Minutes() {
+        snoozeUntil = LocalDateTime.now().plusMinutes(5)
         _timeRemaining.value = 300 // 5 mins
         _isRunning.value = true
         _showPromptDialog.value = false
