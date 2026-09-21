@@ -51,11 +51,21 @@ namespace WorkTimeTracker
             // Start tracker automatically on application launch
             _trackerService.Start();
 
+            _logService.LogsUpdatedExternally += () => Dispatcher.Invoke(() =>
+            {
+                UpdateTrackerUi();
+                UpdateDashboard();
+                UpdateTodayOverview();
+                UpdateCalendarView();
+                UpdateDayEditor();
+            });
+
             UpdateTrackerUi();
             UpdateDashboard();
             UpdateTodayOverview();
             UpdateCalendarView();
             UpdateDayEditor();
+            UpdateCloudSyncButtonState();
 
             Loaded += (s, e) =>
             {
@@ -372,6 +382,57 @@ namespace WorkTimeTracker
         }
 
         private void OnPromptNowClick(object sender, RoutedEventArgs e) => ShowPromptDialog();
+
+        private void UpdateCloudSyncButtonState()
+        {
+            if (BtnCloudSync == null) return;
+            if (_logService.IsCloudSyncActive)
+            {
+                BtnCloudSync.Content = "Google Drive (Active)";
+                BtnCloudSync.ToolTip = $"Syncing with: {_logService.CurrentStorageFilePath}\nChanges from phone auto-refresh.";
+            }
+            else
+            {
+                BtnCloudSync.Content = "Google Drive Sync";
+                BtnCloudSync.ToolTip = "Click to select your Google Drive folder to synchronize time logs with your Android phone.";
+            }
+        }
+
+        private void OnCloudSyncFolderClick(object sender, RoutedEventArgs e)
+        {
+            var dialog = new Microsoft.Win32.OpenFolderDialog
+            {
+                Title = "Select Google Drive / Cloud Sync Folder for WorkTimeTracker",
+                InitialDirectory = Directory.Exists(_logService.CurrentStorageDirectory) 
+                    ? _logService.CurrentStorageDirectory 
+                    : Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)
+            };
+
+            if (dialog.ShowDialog() == true && !string.IsNullOrWhiteSpace(dialog.FolderName))
+            {
+                _logService.SetCustomStorageDirectory(dialog.FolderName);
+                UpdateCloudSyncButtonState();
+                UpdateTrackerUi();
+                UpdateDashboard();
+                UpdateTodayOverview();
+                UpdateCalendarView();
+                UpdateDayEditor();
+
+                // If Android APK is built, copy it to the sync folder so it can be installed from phone!
+                try
+                {
+                    string apkSource = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\..\..\WorkTimeTrackerAndroid\app\build\outputs\apk\debug\app-debug.apk"));
+                    if (File.Exists(apkSource))
+                    {
+                        string apkDest = Path.Combine(dialog.FolderName, "WorkTimeTracker.apk");
+                        File.Copy(apkSource, apkDest, true);
+                    }
+                }
+                catch { }
+
+                System.Windows.MessageBox.Show($"Sync folder set to:\n{dialog.FolderName}\n\nFile: {_logService.CurrentStorageFilePath}\n\nAny entries logged from your Android phone will auto-refresh here in real time.", "Google Drive Sync Configured", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+            }
+        }
 
         // ================= MINI TIMER MODE ("JUST THE TIMER") =================
         private void OnPinToTopRightModeClick(object sender, RoutedEventArgs e)

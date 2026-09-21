@@ -9,11 +9,23 @@ namespace WorkTimeTracker.Services
 {
     public class TimeLogService
     {
-        private static readonly string StorageDirectory = Path.Combine(
+        public static readonly string DefaultStorageDirectory = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
             "WorkTimeTracker");
-        
-        private static readonly string StorageFilePath = Path.Combine(StorageDirectory, "time_logs.json");
+
+        private static readonly string ConfigFilePath = Path.Combine(DefaultStorageDirectory, "sync_config.json");
+
+        private string _activeDirectory = DefaultStorageDirectory;
+        private string _activeFilePath = Path.Combine(DefaultStorageDirectory, "timelogs.json");
+        private FileSystemWatcher? _fileWatcher;
+        private DateTime _lastFileWriteTime = DateTime.MinValue;
+        private readonly object _lockObj = new();
+
+        public event Action? LogsUpdatedExternally;
+
+        public string CurrentStorageDirectory => _activeDirectory;
+        public string CurrentStorageFilePath => _activeFilePath;
+        public bool IsCloudSyncActive => !string.Equals(_activeDirectory, DefaultStorageDirectory, StringComparison.OrdinalIgnoreCase);
 
         public static readonly List<string> DefaultCategories = new()
         {
@@ -49,7 +61,9 @@ namespace WorkTimeTracker.Services
 
         public TimeLogService()
         {
+            InitializeStorageLocation();
             LoadLogs();
+            SetupFileWatcher();
         }
 
         public IReadOnlyList<TimeLog> GetAllLogs() => _logs.OrderByDescending(l => l.Timestamp).ToList();
@@ -215,13 +229,177 @@ namespace WorkTimeTracker.Services
             return days;
         }
 
+        private void InitializeStorageLocation()
+        {
+            try
+            {
+                if (File.Exists(ConfigFilePath))
+                {
+                    string json = File.ReadAllText(ConfigFilePath);
+                    using var doc = JsonDocument.Parse(json);
+                    if (doc.RootElement.TryGetProperty("SyncFolder", out var prop))
+                    {
+                        string? folder = prop.GetString();
+                        if (!string.IsNullOrWhiteSpace(folder) && Directory.Exists(folder))
+                        {
+                            _activeDirectory = folder;
+                            _activeFilePath = Path.Combine(_activeDirectory, "timelogs.json");
+                            return;
+                        }
+                    }
+                }
+            }
+            catch { }
+
+            // Auto-detect Google Drive if available
+            string userProfile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+            string[] googleDriveCandidates = new[]
+            {
+                @"G:\My Drive\WorkTimeTracker",
+                @"G:\My Drive",
+                Path.Combine(userProfile, "Google Drive", "WorkTimeTracker"),
+                Path.Combine(userProfile, "Google Drive"),
+                Path.Combine(userProfile, "My Drive")
+            };
+
+            foreach (var candidate in googleDriveCandidates)
+            {
+                if (Directory.Exists(candidate))
+                {
+                    string target = candidate.EndsWith("WorkTimeTracker", StringComparison.OrdinalIgnoreCase) 
+                        ? candidate 
+                        : Path.Combine(candidate, "WorkTimeTracker");
+                    
+                    try
+                    {
+                        Directory.CreateDirectory(target);
+                        _activeDirectory = target;
+                        _activeFilePath = Path.Combine(_activeDirectory, "timelogs.json");
+                        SaveSyncConfig(_activeDirectory);
+                        return;
+                    }
+                    catch { }
+                }
+            }
+
+            _activeDirectory = DefaultStorageDirectory;
+            _activeFilePath = Path.Combine(DefaultStorageDirectory, "timelogs.json");
+        }
+
+        public void SetCustomStorageDirectory(string newDirectory)
+        {
+            if (string.IsNullOrWhiteSpace(newDirectory))
+            {
+                ResetToDefaultLocalDirectory();
+                return;
+            }
+
+            try
+            {
+                Directory.CreateDirectory(newDirectory);
+                _activeDirectory = newDirectory;
+                _activeFilePath = Path.Combine(_activeDirectory, "timelogs.json");
+
+                // If timelogs.json doesn't exist in new folder, copy existing logs there
+                if (!File.Exists(_activeFilePath) && _logs.Count > 0)
+                {
+                    SaveLogs();
+                }
+                else if (File.Exists(_activeFilePath))
+                {
+                    LoadLogs();
+                }
+
+                SaveSyncConfig(_activeDirectory);
+                SetupFileWatcher();
+                LogsUpdatedExternally?.Invoke();
+            }
+            catch { }
+        }
+
+        public void ResetToDefaultLocalDirectory()
+        {
+            _activeDirectory = DefaultStorageDirectory;
+            _activeFilePath = Path.Combine(DefaultStorageDirectory, "timelogs.json");
+            SaveSyncConfig(string.Empty);
+            SetupFileWatcher();
+            LoadLogs();
+            LogsUpdatedExternally?.Invoke();
+        }
+
+        private void SaveSyncConfig(string folder)
+        {
+            try
+            {
+                Directory.CreateDirectory(DefaultStorageDirectory);
+                string json = JsonSerializer.Serialize(new { SyncFolder = folder }, new JsonSerializerOptions { WriteIndented = true });
+                File.WriteAllText(ConfigFilePath, json);
+            }
+            catch { }
+        }
+
+        private void SetupFileWatcher()
+        {
+            try
+            {
+                _fileWatcher?.Dispose();
+                _fileWatcher = null;
+
+                if (!Directory.Exists(_activeDirectory))
+                {
+                    Directory.CreateDirectory(_activeDirectory);
+                }
+
+                _fileWatcher = new FileSystemWatcher(_activeDirectory)
+                {
+                    Filter = Path.GetFileName(_activeFilePath),
+                    NotifyFilter = NotifyFilters.LastWrite | NotifyFilters.Size | NotifyFilters.FileName,
+                    EnableRaisingEvents = true
+                };
+
+                _fileWatcher.Changed += OnFileChanged;
+                _fileWatcher.Created += OnFileChanged;
+            }
+            catch { }
+        }
+
+        private void OnFileChanged(object sender, FileSystemEventArgs e)
+        {
+            lock (_lockObj)
+            {
+                // Debounce rapid writes
+                if ((DateTime.Now - _lastFileWriteTime).TotalMilliseconds < 800)
+                {
+                    return;
+                }
+                _lastFileWriteTime = DateTime.Now;
+            }
+
+            // Brief pause to allow file stream close
+            System.Threading.Thread.Sleep(200);
+
+            LoadLogs();
+            LogsUpdatedExternally?.Invoke();
+        }
+
         private void LoadLogs()
         {
             try
             {
-                if (File.Exists(StorageFilePath))
+                string targetPath = _activeFilePath;
+                // If timelogs.json does not exist yet, check legacy time_logs.json in local app data
+                if (!File.Exists(targetPath))
                 {
-                    string json = File.ReadAllText(StorageFilePath);
+                    string legacyPath = Path.Combine(DefaultStorageDirectory, "time_logs.json");
+                    if (File.Exists(legacyPath))
+                    {
+                        targetPath = legacyPath;
+                    }
+                }
+
+                if (File.Exists(targetPath))
+                {
+                    string json = File.ReadAllText(targetPath);
                     var loaded = JsonSerializer.Deserialize<List<TimeLog>>(json);
                     if (loaded != null)
                     {
@@ -240,14 +418,26 @@ namespace WorkTimeTracker.Services
         {
             try
             {
-                if (!Directory.Exists(StorageDirectory))
+                if (!Directory.Exists(_activeDirectory))
                 {
-                    Directory.CreateDirectory(StorageDirectory);
+                    Directory.CreateDirectory(_activeDirectory);
+                }
+
+                lock (_lockObj)
+                {
+                    _lastFileWriteTime = DateTime.Now;
                 }
 
                 var options = new JsonSerializerOptions { WriteIndented = true };
                 string json = JsonSerializer.Serialize(_logs, options);
-                File.WriteAllText(StorageFilePath, json);
+                File.WriteAllText(_activeFilePath, json);
+
+                // Also keep a local backup in local appdata if custom directory is active
+                if (IsCloudSyncActive)
+                {
+                    string backupPath = Path.Combine(DefaultStorageDirectory, "timelogs.json");
+                    File.WriteAllText(backupPath, json);
+                }
             }
             catch
             {
