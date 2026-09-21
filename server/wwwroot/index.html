@@ -1,0 +1,1240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Work Time Tracker</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220%22><text y=%2226%22 font-size=%2226%22>⏱️</text></svg>">
+  <style>
+    :root {
+      --bg-dark: #121212;
+      --card-bg: #1e1e1e;
+      --card-border: #2e2e2e;
+      --primary: #0078d4;
+      --primary-hover: #1086e0;
+      --accent-green: #107c41;
+      --accent-green-text: #57d9a3;
+      --accent-orange: #ffa834;
+      --accent-red: #ea4335;
+      --text-main: #f5f5f5;
+      --text-muted: #888888;
+      --text-dim: #555555;
+      --font-mono: 'Cascadia Code', 'Fira Code', 'Courier New', monospace;
+      --font-ui: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      font-family: var(--font-ui);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 16px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 680px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    /* Header Bar */
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-icon {
+      width: 40px;
+      height: 40px;
+      background: var(--primary);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      box-shadow: 0 4px 12px rgba(0, 120, 212, 0.3);
+    }
+
+    .brand-info h1 {
+      font-size: 17px;
+      font-weight: 700;
+      letter-spacing: -0.2px;
+    }
+
+    .brand-info p {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 7px 14px;
+      font-size: 12px;
+      font-weight: 600;
+      border-radius: 8px;
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      background: #252525;
+      color: var(--text-main);
+      text-decoration: none;
+    }
+
+    .btn:hover {
+      background: #323232;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-hover);
+    }
+
+    .btn-green {
+      background: #173121;
+      border-color: var(--accent-green);
+      color: var(--accent-green-text);
+    }
+
+    .btn-green:hover {
+      background: #1e3f2b;
+    }
+
+    /* Cards */
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 18px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+    }
+
+    /* Timer Card */
+    .timer-card {
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .timer-status-row {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: #4cc2ff;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #4cc2ff;
+      box-shadow: 0 0 8px #4cc2ff;
+    }
+
+    .status-badge.paused .status-dot {
+      background: var(--accent-orange);
+      box-shadow: 0 0 8px var(--accent-orange);
+    }
+
+    .status-badge.paused {
+      color: var(--accent-orange);
+    }
+
+    .timer-display {
+      font-family: var(--font-mono);
+      font-size: 58px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      color: white;
+      margin: 4px 0;
+      text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+    }
+
+    .progress-bar-bg {
+      width: 100%;
+      height: 5px;
+      background: #282828;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      background: var(--primary);
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+
+    .timer-controls {
+      display: flex;
+      gap: 8px;
+      width: 100%;
+      margin-top: 4px;
+    }
+
+    .timer-controls .btn {
+      flex: 1;
+      padding: 10px;
+      font-size: 13px;
+    }
+
+    /* Target Goal Card */
+    .target-card {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      background: #231b10;
+      border-color: #4a381c;
+      transition: all 0.3s ease;
+    }
+
+    .target-card.met {
+      background: #142e1e;
+      border-color: #1f5c37;
+    }
+
+    .target-icon-box {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      background: #382a14;
+      flex-shrink: 0;
+    }
+
+    .target-card.met .target-icon-box {
+      background: #107c41;
+      color: var(--accent-green-text);
+    }
+
+    .target-info {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .target-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--accent-orange);
+    }
+
+    .target-card.met .target-title {
+      color: var(--accent-green-text);
+    }
+
+    .target-details {
+      font-size: 11px;
+      color: #cccccc;
+    }
+
+    .target-progress-fill {
+      background: var(--accent-orange);
+    }
+
+    .target-card.met .target-progress-fill {
+      background: var(--accent-green-text);
+    }
+
+    /* Category Shortcuts */
+    .section-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-muted);
+      letter-spacing: 0.5px;
+      margin-top: 4px;
+    }
+
+    .categories-grid {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+      scrollbar-width: none;
+    }
+
+    .categories-grid::-webkit-scrollbar {
+      display: none;
+    }
+
+    .cat-chip {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: #1e1e1e;
+      border: 1px solid #333333;
+      border-radius: 8px;
+      padding: 7px 11px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.15s ease;
+    }
+
+    .cat-chip:hover {
+      background: #2a2a2a;
+      transform: translateY(-1px);
+    }
+
+    /* Logs Section */
+    .logs-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 4px;
+    }
+
+    .log-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .log-item {
+      display: flex;
+      align-items: center;
+      background: var(--card-bg);
+      border: 1px solid #282828;
+      border-radius: 8px;
+      padding: 10px 14px;
+      gap: 12px;
+      transition: background 0.15s ease;
+    }
+
+    .log-item:hover {
+      background: #222222;
+    }
+
+    .log-strip {
+      width: 4px;
+      height: 36px;
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+
+    .log-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .log-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .log-cat {
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .log-time {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .log-desc {
+      font-size: 12px;
+      color: #dddddd;
+      word-break: break-word;
+    }
+
+    .log-duration {
+      font-size: 11px;
+      font-weight: 700;
+      background: #282828;
+      color: #aaaaaa;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-family: var(--font-mono);
+    }
+
+    .btn-delete {
+      background: transparent;
+      border: none;
+      color: #666666;
+      cursor: pointer;
+      font-size: 14px;
+      padding: 4px;
+      border-radius: 4px;
+      transition: all 0.15s ease;
+    }
+
+    .btn-delete:hover {
+      color: var(--accent-red);
+      background: rgba(234, 67, 53, 0.1);
+    }
+
+    .empty-state {
+      padding: 28px;
+      text-align: center;
+      color: var(--text-dim);
+      font-size: 12px;
+      line-height: 1.6;
+    }
+
+    /* Modals */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(4px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 16px;
+    }
+
+    .modal-backdrop.active {
+      display: flex;
+    }
+
+    .modal {
+      background: #1e1e1e;
+      border: 1px solid #383838;
+      border-radius: 14px;
+      width: 100%;
+      max-width: 440px;
+      padding: 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      box-shadow: 0 16px 40px rgba(0,0,0,0.6);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .modal-title {
+      font-size: 16px;
+      font-weight: 700;
+    }
+
+    .close-btn {
+      background: transparent;
+      border: none;
+      color: #888888;
+      font-size: 20px;
+      cursor: pointer;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .form-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    .form-input, .form-select {
+      background: #141414;
+      border: 1px solid #333333;
+      border-radius: 8px;
+      padding: 10px 12px;
+      color: white;
+      font-size: 13px;
+      outline: none;
+      transition: border-color 0.15s ease;
+    }
+
+    .form-input:focus, .form-select:focus {
+      border-color: var(--primary);
+    }
+
+    .duration-chips {
+      display: flex;
+      gap: 6px;
+    }
+
+    .duration-chip {
+      flex: 1;
+      text-align: center;
+      padding: 7px;
+      background: #252525;
+      border: 1px solid #383838;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .duration-chip.selected {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: white;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: #222222;
+      border: 1px solid #3a3a3a;
+      padding: 10px 18px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      color: white;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+      z-index: 2000;
+      opacity: 0;
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+
+    @media (max-width: 480px) {
+      .timer-display {
+        font-size: 46px;
+      }
+      .brand-info h1 {
+        font-size: 15px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <!-- Header -->
+    <header>
+      <div class="brand">
+        <div class="brand-icon">⏱️</div>
+        <div class="brand-info">
+          <h1>Work Time Tracker</h1>
+          <p>Home Server Web App</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-green" id="btnExportModal">📊 Export Excel</button>
+        <button class="btn" id="btnSettingsModal">⚙️ <span id="statusIndicator">Key</span></button>
+      </div>
+    </header>
+
+    <!-- 1. Live Countdown Timer Card -->
+    <div class="card timer-card">
+      <div class="timer-status-row">
+        <div class="status-badge" id="timerBadge">
+          <span class="status-dot"></span>
+          <span id="timerStatusText">INTERVAL ACTIVE</span>
+        </div>
+        <span style="color: var(--text-muted);">30-Min Block</span>
+      </div>
+
+      <div class="timer-display" id="timerCountdown">27:00</div>
+
+      <div class="progress-bar-bg">
+        <div class="progress-bar-fill" id="timerProgress"></div>
+      </div>
+
+      <div class="timer-controls">
+        <button class="btn" id="btnToggleTimer" style="background: #2a2a2a;">⏸️ Pause</button>
+        <button class="btn" id="btnResetTimer">↺ Reset</button>
+        <button class="btn btn-primary" id="btnOpenCheckIn">+ Check-in</button>
+      </div>
+    </div>
+
+    <!-- 2. Daily 7.5-Hour Goal Card -->
+    <div class="card target-card" id="targetCard">
+      <div class="target-icon-box" id="targetIcon">⏱️</div>
+      <div class="target-info">
+        <div class="target-title" id="targetTitle">Daily 7.5h Goal in Progress</div>
+        <div class="target-details" id="targetDetails">Today: 0.0h of 7.5h target (0 blocks)</div>
+        <div class="progress-bar-bg" style="margin-top: 4px;">
+          <div class="progress-bar-fill target-progress-fill" id="targetProgressBar"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. Quick Category Check-in Shortcuts -->
+    <div class="section-title">QUICK CHECK-IN CATEGORIES</div>
+    <div class="categories-grid" id="categoriesGrid">
+      <!-- Populated via JS -->
+    </div>
+
+    <!-- 4. Today's Logged Blocks Header & List -->
+    <div class="logs-header">
+      <div class="section-title" id="todayHeader">TODAY'S LOGGED BLOCKS (0)</div>
+      <button class="btn" id="btnRefresh" style="padding: 4px 8px; font-size: 11px;">↺ Refresh</button>
+    </div>
+    <div class="log-list" id="todayLogsList">
+      <div class="empty-state">No blocks logged yet today.<br>Tap Check-in or start the interval timer!</div>
+    </div>
+
+    <!-- 5. Previous Logged Blocks Header & List -->
+    <div id="pastLogsContainer" style="display: none; flex-direction: column; gap: 8px;">
+      <div class="section-title" id="pastHeader" style="margin-top: 8px;">PREVIOUS LOGGED BLOCKS (0)</div>
+      <div class="log-list" id="pastLogsList"></div>
+    </div>
+  </div>
+
+  <!-- CHECK-IN MODAL -->
+  <div class="modal-backdrop" id="checkInModal">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title">Record 30-Min Work Block</div>
+        <button class="close-btn" id="btnCloseCheckIn">&times;</button>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Category</label>
+        <select class="form-select" id="inputCategory">
+          <option value="Feature Development & Coding">💻 Feature Development & Coding</option>
+          <option value="Production Incident & Triage">🚨 Production Incident & Triage</option>
+          <option value="Prod Support & Monitoring">🔍 Prod Support & Monitoring</option>
+          <option value="Bug Fixing & Investigation">🐛 Bug Fixing & Investigation</option>
+          <option value="Code Review & Pull Requests">👥 Code Review & Pull Requests</option>
+          <option value="Deployments & Releases">🚀 Deployments & Releases</option>
+          <option value="Architecture & Tech Design">📐 Architecture & Tech Design</option>
+          <option value="Standups, Meetings & Syncs">💬 Standups, Meetings & Syncs</option>
+          <option value="User Inquiries & On-Call Admin">📞 User Inquiries & On-Call Admin</option>
+          <option value="Documentation & Knowledge Base">📚 Documentation & Knowledge Base</option>
+          <option value="Break / Other">☕ Break / Other</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Duration</label>
+        <div class="duration-chips">
+          <div class="duration-chip" data-mins="15">15m</div>
+          <div class="duration-chip selected" data-mins="30">30m</div>
+          <div class="duration-chip" data-mins="45">45m</div>
+          <div class="duration-chip" data-mins="60">1h</div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Description / Ticket Notes (Optional)</label>
+        <input type="text" class="form-input" id="inputDescription" placeholder="e.g. Fixed bug #429 or auth middleware">
+      </div>
+
+      <div style="display: flex; gap: 8px; margin-top: 6px;">
+        <button class="btn" id="btnCancelCheckIn" style="flex: 1;">Cancel</button>
+        <button class="btn btn-primary" id="btnSaveCheckIn" style="flex: 1;">Save Block</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- EXCEL EXPORT MODAL -->
+  <div class="modal-backdrop" id="exportModal">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title">📊 Export Work Week to Excel</div>
+        <button class="close-btn" id="btnCloseExport">&times;</button>
+      </div>
+      <p style="font-size: 12px; color: var(--text-muted); line-height: 1.5;">
+        Generates a professional ClosedXML spreadsheet containing:
+        <br>• <strong>Weekly Summary</strong>: Total hours, 7.5h target checklist, & Category breakdown.
+        <br>• <strong>Activity Log</strong>: Detailed list of every logged interval block.
+      </p>
+
+      <div class="form-group">
+        <label class="form-label">Select Work Week (Monday – Sunday)</label>
+        <select class="form-select" id="exportWeekSelect">
+          <option value="current">Current Work Week</option>
+          <option value="previous">Previous Work Week</option>
+          <option value="custom">Custom Date in Week...</option>
+        </select>
+      </div>
+
+      <div class="form-group" id="customDateGroup" style="display: none;">
+        <label class="form-label">Choose Any Date in the Week</label>
+        <input type="date" class="form-input" id="inputCustomDate">
+      </div>
+
+      <div style="display: flex; gap: 8px; margin-top: 8px;">
+        <button class="btn" id="btnCancelExport" style="flex: 1;">Cancel</button>
+        <button class="btn btn-green" id="btnDownloadExcel" style="flex: 1.2;">Download (.xlsx)</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SETTINGS / API KEY MODAL -->
+  <div class="modal-backdrop" id="settingsModal">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title">⚙️ Server Connection & API Key</div>
+        <button class="close-btn" id="btnCloseSettings">&times;</button>
+      </div>
+      <p style="font-size: 12px; color: var(--text-muted); line-height: 1.5;">
+        Enter the secret API Key configured in your Docker <code>.env</code> file. It will be securely remembered in your browser.
+      </p>
+
+      <div class="form-group">
+        <label class="form-label">Server API Key (X-API-Key)</label>
+        <input type="password" class="form-input" id="inputApiKey" placeholder="Enter API Key">
+      </div>
+
+      <div id="testConnectionStatus" style="font-size: 11px; display: none;"></div>
+
+      <div style="display: flex; gap: 8px; margin-top: 6px;">
+        <button class="btn" id="btnTestConn" style="flex: 1;">Test Connection</button>
+        <button class="btn btn-primary" id="btnSaveSettings" style="flex: 1;">Save & Sync</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Floating Toast -->
+  <div class="toast" id="toastMessage"></div>
+
+  <script>
+    // --- Data Definitions ---
+    const CATEGORIES = [
+      { name: "Feature Development & Coding", color: "#0078D4", icon: "💻" },
+      { name: "Production Incident & Triage", color: "#E81123", icon: "🚨" },
+      { name: "Prod Support & Monitoring", color: "#FF8C00", icon: "🔍" },
+      { name: "Bug Fixing & Investigation", color: "#EA4335", icon: "🐛" },
+      { name: "Code Review & Pull Requests", color: "#8764B8", icon: "👥" },
+      { name: "Deployments & Releases", color: "#107C41", icon: "🚀" },
+      { name: "Architecture & Tech Design", color: "#00B7C3", icon: "📐" },
+      { name: "Standups, Meetings & Syncs", color: "#5C2D91", icon: "💬" },
+      { name: "User Inquiries & On-Call Admin", color: "#D83B01", icon: "📞" },
+      { name: "Documentation & Knowledge Base", color: "#4F6BED", icon: "📚" },
+      { name: "Break / Other", color: "#8A8886", icon: "☕" }
+    ];
+
+    function getCategoryColor(catName) {
+      const found = CATEGORIES.find(c => c.name.toLowerCase() === (catName || '').toLowerCase().trim());
+      return found ? found.color : "#0078D4";
+    }
+
+    // --- State Management ---
+    let apiKey = localStorage.getItem('wtt_api_key') || '';
+    // Check if query string contains key (e.g. ?key=...)
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('key')) {
+      apiKey = urlParams.get('key');
+      localStorage.setItem('wtt_api_key', apiKey);
+    }
+
+    let isTimerRunning = true;
+    let selectedDurationMins = 30;
+    let allLogs = [];
+
+    // --- Audio Notification Chime ---
+    function playChime() {
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(587.33, ctx.currentTime); // D5
+        osc.frequency.setValueAtTime(880, ctx.currentTime + 0.15); // A5
+        gain.gain.setValueAtTime(0.2, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.8);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.8);
+      } catch (e) { }
+    }
+
+    // --- Wall-Clock Interval Timer Sync ---
+    function getNextHalfHourBoundary() {
+      const now = new Date();
+      const next = new Date(now);
+      if (now.getMinutes() < 30) {
+        next.setMinutes(30, 0, 0);
+      } else {
+        next.setHours(now.getHours() + 1, 0, 0, 0);
+      }
+      return next;
+    }
+
+    function getRemainingSeconds() {
+      const now = new Date();
+      const next = getNextHalfHourBoundary();
+      return Math.max(0, Math.floor((next - now) / 1000));
+    }
+
+    let lastTriggeredMinute = -1;
+
+    function updateTimerUI() {
+      if (!isTimerRunning) return;
+
+      const remaining = getRemainingSeconds();
+      const mins = Math.floor(remaining / 60);
+      const secs = remaining % 60;
+      const formatted = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+
+      document.getElementById('timerCountdown').textContent = formatted;
+      document.title = `(${formatted}) Work Time Tracker`;
+
+      const progress = ((1800 - remaining) / 1800) * 100;
+      document.getElementById('timerProgress').style.width = `${progress}%`;
+
+      // Trigger pop-up check-in at boundary
+      const now = new Date();
+      if ((now.getMinutes() === 0 || now.getMinutes() === 30) && now.getSeconds() === 0) {
+        if (lastTriggeredMinute !== now.getMinutes()) {
+          lastTriggeredMinute = now.getMinutes();
+          playChime();
+          openCheckInModal();
+          showToast("⏰ 30-Minute Interval complete! Time to check in.");
+        }
+      }
+    }
+
+    setInterval(updateTimerUI, 1000);
+    updateTimerUI();
+
+    // Timer controls
+    const btnToggle = document.getElementById('btnToggleTimer');
+    btnToggle.addEventListener('click', () => {
+      isTimerRunning = !isTimerRunning;
+      const badge = document.getElementById('timerBadge');
+      const text = document.getElementById('timerStatusText');
+      if (isTimerRunning) {
+        badge.classList.remove('paused');
+        text.textContent = 'INTERVAL ACTIVE';
+        btnToggle.textContent = '⏸️ Pause';
+        updateTimerUI();
+      } else {
+        badge.classList.add('paused');
+        text.textContent = 'TIMER PAUSED';
+        btnToggle.textContent = '▶️ Resume';
+      }
+    });
+
+    document.getElementById('btnResetTimer').addEventListener('click', () => {
+      isTimerRunning = true;
+      document.getElementById('timerBadge').classList.remove('paused');
+      document.getElementById('timerStatusText').textContent = 'INTERVAL ACTIVE';
+      btnToggle.textContent = '⏸️ Pause';
+      updateTimerUI();
+      showToast("Timer aligned to current half-hour.");
+    });
+
+    // --- Toast Helper ---
+    let toastTimeout;
+    function showToast(msg) {
+      const toast = document.getElementById('toastMessage');
+      toast.textContent = msg;
+      toast.classList.add('show');
+      clearTimeout(toastTimeout);
+      toastTimeout = setTimeout(() => {
+        toast.classList.remove('show');
+      }, 3500);
+    }
+
+    // --- Quick Categories Render ---
+    const catGrid = document.getElementById('categoriesGrid');
+    CATEGORIES.forEach(cat => {
+      const chip = document.createElement('div');
+      chip.className = 'cat-chip';
+      chip.style.borderColor = cat.color + '44';
+      chip.innerHTML = `<span>${cat.icon}</span><span style="color: ${cat.color};">${cat.name}</span>`;
+      chip.addEventListener('click', () => {
+        document.getElementById('inputCategory').value = cat.name;
+        openCheckInModal();
+      });
+      catGrid.appendChild(chip);
+    });
+
+    // --- Duration Selector in Modal ---
+    document.querySelectorAll('.duration-chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        document.querySelectorAll('.duration-chip').forEach(c => c.classList.remove('selected'));
+        chip.classList.add('selected');
+        selectedDurationMins = parseInt(chip.getAttribute('data-mins'), 10);
+      });
+    });
+
+    // --- Date Helpers ---
+    function parseDate(dateStr) {
+      if (!dateStr) return new Date();
+      const d = new Date(dateStr);
+      return isNaN(d) ? new Date() : d;
+    }
+
+    function isToday(date) {
+      const now = new Date();
+      return date.getFullYear() === now.getFullYear() &&
+             date.getMonth() === now.getMonth() &&
+             date.getDate() === now.getDate();
+    }
+
+    function formatTime(date) {
+      return date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+    }
+
+    function formatShortDate(date) {
+      return date.toLocaleDateString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+    }
+
+    function parseDurationHours(durStr) {
+      if (!durStr) return 0.5;
+      const parts = durStr.split(':');
+      const h = parseFloat(parts[0]) || 0;
+      const m = parseFloat(parts[1]) || 0;
+      const s = parseFloat(parts[2]) || 0;
+      return h + (m / 60.0) + (s / 3600.0);
+    }
+
+    // --- API Calls ---
+    async function apiRequest(path, options = {}) {
+      const headers = options.headers || {};
+      if (apiKey) {
+        headers['X-API-Key'] = apiKey;
+      }
+      headers['Content-Type'] = 'application/json';
+
+      // Attach key in query string as fallback
+      const url = apiKey ? `${path}?key=${encodeURIComponent(apiKey)}` : path;
+
+      const res = await fetch(url, { ...options, headers });
+      if (res.status === 401) {
+        document.getElementById('statusIndicator').textContent = 'Key Required';
+        document.getElementById('statusIndicator').style.color = '#ffa834';
+        throw new Error('401 Unauthorized: Please configure API Key');
+      }
+      return res;
+    }
+
+    async function fetchLogs() {
+      try {
+        const res = await apiRequest('/api/logs');
+        if (res.ok) {
+          allLogs = await res.json();
+          document.getElementById('statusIndicator').textContent = '🟢 Server';
+          document.getElementById('statusIndicator').style.color = '#57d9a3';
+          renderLogs();
+          updateDailyGoal();
+        }
+      } catch (err) {
+        console.error('Fetch logs error:', err);
+      }
+    }
+
+    // --- Render Logs & Target ---
+    function updateDailyGoal() {
+      const todayLogs = allLogs.filter(l => isToday(parseDate(l.timestamp || l.Timestamp)));
+      const todayHours = todayLogs.reduce((acc, l) => acc + parseDurationHours(l.duration || l.Duration), 0);
+      const targetMet = todayHours >= 7.5;
+      const progress = Math.min(100, Math.max(0, (todayHours / 7.5) * 100));
+
+      const card = document.getElementById('targetCard');
+      const title = document.getElementById('targetTitle');
+      const details = document.getElementById('targetDetails');
+      const icon = document.getElementById('targetIcon');
+      const bar = document.getElementById('targetProgressBar');
+
+      if (targetMet) {
+        card.classList.add('met');
+        title.textContent = '✓ 7.5h Target Achieved!';
+        icon.textContent = '✓';
+      } else {
+        card.classList.remove('met');
+        title.textContent = 'Daily 7.5h Goal in Progress';
+        icon.textContent = '⏱️';
+      }
+
+      details.textContent = `Today: ${todayHours.toFixed(1)}h of 7.5h target (${todayLogs.length} blocks)`;
+      bar.style.width = `${progress}%`;
+    }
+
+    function renderLogs() {
+      const todayList = document.getElementById('todayLogsList');
+      const pastList = document.getElementById('pastLogsList');
+      const pastContainer = document.getElementById('pastLogsContainer');
+
+      const todayLogs = [];
+      const pastLogs = [];
+
+      allLogs.forEach(log => {
+        const d = parseDate(log.timestamp || log.Timestamp);
+        if (isToday(d)) {
+          todayLogs.push(log);
+        } else {
+          pastLogs.push(log);
+        }
+      });
+
+      document.getElementById('todayHeader').textContent = `TODAY'S LOGGED BLOCKS (${todayLogs.length})`;
+
+      // Render Today
+      if (todayLogs.length === 0) {
+        todayList.innerHTML = `<div class="empty-state">No blocks logged yet today.<br>Tap Check-in or start the interval timer!</div>`;
+      } else {
+        todayList.innerHTML = todayLogs.map(l => createLogHtml(l, true)).join('');
+      }
+
+      // Render Past
+      if (pastLogs.length > 0) {
+        pastContainer.style.display = 'flex';
+        document.getElementById('pastHeader').textContent = `PREVIOUS LOGGED BLOCKS (${pastLogs.length})`;
+        pastList.innerHTML = pastLogs.map(l => createLogHtml(l, false)).join('');
+      } else {
+        pastContainer.style.display = 'none';
+      }
+
+      // Attach delete handlers
+      document.querySelectorAll('.btn-delete').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+          const id = e.currentTarget.getAttribute('data-id');
+          if (confirm('Delete this logged block?')) {
+            await deleteLog(id);
+          }
+        });
+      });
+    }
+
+    function createLogHtml(log, isCurrentDay) {
+      const id = log.id || log.Id;
+      const category = log.category || log.Category || 'General Work';
+      const description = log.description || log.Description || '';
+      const duration = log.duration || log.Duration || '00:30:00';
+      const date = parseDate(log.timestamp || log.Timestamp);
+      const color = getCategoryColor(category);
+      const timeStr = isCurrentDay ? formatTime(date) : formatShortDate(date);
+
+      // Duration label (e.g. "30m" or "1h")
+      const hours = parseDurationHours(duration);
+      const durLabel = hours >= 1 ? `${hours}h` : `${Math.round(hours * 60)}m`;
+
+      return `
+        <div class="log-item">
+          <div class="log-strip" style="background: ${color};"></div>
+          <div class="log-content">
+            <div class="log-meta">
+              <span class="log-cat" style="color: ${color};">${category}</span>
+              <span class="log-time">• ${timeStr}</span>
+            </div>
+            ${description ? `<div class="log-desc">${escapeHtml(description)}</div>` : ''}
+          </div>
+          <div class="log-duration">${durLabel}</div>
+          <button class="btn-delete" data-id="${id}" title="Delete block">🗑️</button>
+        </div>
+      `;
+    }
+
+    function escapeHtml(str) {
+      return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+
+    async function deleteLog(id) {
+      try {
+        const res = await apiRequest(`/api/logs/${id}`, { method: 'DELETE' });
+        if (res.ok) {
+          allLogs = allLogs.filter(l => (l.id || l.Id) !== id);
+          renderLogs();
+          updateDailyGoal();
+          showToast('Block deleted.');
+        } else {
+          showToast('Failed to delete block.');
+        }
+      } catch (err) {
+        showToast('Error deleting block: ' + err.message);
+      }
+    }
+
+    // --- Record / Check-in ---
+    const checkInModal = document.getElementById('checkInModal');
+    function openCheckInModal() {
+      checkInModal.classList.add('active');
+      document.getElementById('inputDescription').focus();
+    }
+    function closeCheckInModal() {
+      checkInModal.classList.remove('active');
+    }
+
+    document.getElementById('btnOpenCheckIn').addEventListener('click', openCheckInModal);
+    document.getElementById('btnCloseCheckIn').addEventListener('click', closeCheckInModal);
+    document.getElementById('btnCancelCheckIn').addEventListener('click', closeCheckInModal);
+
+    document.getElementById('btnSaveCheckIn').addEventListener('click', async () => {
+      const category = document.getElementById('inputCategory').value;
+      const description = document.getElementById('inputDescription').value.trim();
+      const minutes = selectedDurationMins;
+
+      const durStr = `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}:00`;
+      const newLog = {
+        id: crypto.randomUUID ? crypto.randomUUID() : ('log_' + Date.now()),
+        timestamp: new Date().toISOString(),
+        duration: durStr,
+        category: category,
+        description: description
+      };
+
+      try {
+        const res = await apiRequest('/api/logs', {
+          method: 'POST',
+          body: JSON.stringify([newLog])
+        });
+
+        if (res.ok) {
+          allLogs.unshift(newLog);
+          renderLogs();
+          updateDailyGoal();
+          closeCheckInModal();
+          document.getElementById('inputDescription').value = '';
+          showToast(`Logged ${minutes}m of ${category}!`);
+        } else {
+          showToast('Failed to save log to server.');
+        }
+      } catch (err) {
+        showToast('Error saving: ' + err.message);
+      }
+    });
+
+    // --- Settings & API Key Modal ---
+    const settingsModal = document.getElementById('settingsModal');
+    document.getElementById('btnSettingsModal').addEventListener('click', () => {
+      document.getElementById('inputApiKey').value = apiKey;
+      document.getElementById('testConnectionStatus').style.display = 'none';
+      settingsModal.classList.add('active');
+    });
+    document.getElementById('btnCloseSettings').addEventListener('click', () => settingsModal.classList.remove('active'));
+
+    document.getElementById('btnTestConn').addEventListener('click', async () => {
+      const testKey = document.getElementById('inputApiKey').value.trim();
+      const statusEl = document.getElementById('testConnectionStatus');
+      statusEl.style.display = 'block';
+      statusEl.textContent = 'Testing connection...';
+      statusEl.style.color = '#888888';
+
+      try {
+        const res = await fetch(`/api/logs?key=${encodeURIComponent(testKey)}`, {
+          headers: { 'X-API-Key': testKey }
+        });
+
+        if (res.ok) {
+          statusEl.textContent = '✓ Successfully connected to WorkTimeTracker Docker Server!';
+          statusEl.style.color = '#57d9a3';
+        } else if (res.status === 401) {
+          statusEl.textContent = '✗ 401 Unauthorized: Invalid API Key.';
+          statusEl.style.color = '#ea4335';
+        } else {
+          statusEl.textContent = `✗ Server returned HTTP ${res.status}.`;
+          statusEl.style.color = '#ea4335';
+        }
+      } catch (err) {
+        statusEl.textContent = '✗ Connection failed: ' + err.message;
+        statusEl.style.color = '#ea4335';
+      }
+    });
+
+    document.getElementById('btnSaveSettings').addEventListener('click', () => {
+      apiKey = document.getElementById('inputApiKey').value.trim();
+      localStorage.setItem('wtt_api_key', apiKey);
+      settingsModal.classList.remove('active');
+      showToast('API Key saved!');
+      fetchLogs();
+    });
+
+    document.getElementById('btnRefresh').addEventListener('click', () => {
+      fetchLogs();
+      showToast('Refreshed logs from server.');
+    });
+
+    // --- Excel Export Modal ---
+    const exportModal = document.getElementById('exportModal');
+    document.getElementById('btnExportModal').addEventListener('click', () => {
+      exportModal.classList.add('active');
+    });
+    document.getElementById('btnCloseExport').addEventListener('click', () => exportModal.classList.remove('active'));
+    document.getElementById('btnCancelExport').addEventListener('click', () => exportModal.classList.remove('active'));
+
+    const exportSelect = document.getElementById('exportWeekSelect');
+    const customDateGroup = document.getElementById('customDateGroup');
+    exportSelect.addEventListener('change', () => {
+      customDateGroup.style.display = exportSelect.value === 'custom' ? 'block' : 'none';
+    });
+
+    document.getElementById('btnDownloadExcel').addEventListener('click', () => {
+      const mode = exportSelect.value;
+      let targetDate = new Date();
+
+      if (mode === 'previous') {
+        targetDate.setDate(targetDate.getDate() - 7);
+      } else if (mode === 'custom') {
+        const val = document.getElementById('inputCustomDate').value;
+        if (!val) {
+          alert('Please pick a date for the custom week.');
+          return;
+        }
+        targetDate = new Date(val);
+      }
+
+      const dateStr = targetDate.toISOString().split('T')[0];
+      const exportUrl = `/api/export/excel?weekStart=${dateStr}&key=${encodeURIComponent(apiKey)}`;
+
+      // Direct trigger download
+      window.location.href = exportUrl;
+      exportModal.classList.remove('active');
+      showToast('Generating Excel report...');
+    });
+
+    // --- Initial Load ---
+    if (!apiKey) {
+      settingsModal.classList.add('active');
+    } else {
+      fetchLogs();
+    }
+  </script>
+</body>
+</html>
