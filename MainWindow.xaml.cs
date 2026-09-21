@@ -409,8 +409,18 @@ namespace WorkTimeTracker
             Width = Math.Max(_previousWidth, 980);
             Height = Math.Max(_previousHeight, 680);
             Topmost = false;
+
+            CenterOnScreen();
+
             UpdateTrackerUi();
             Focus();
+        }
+
+        private void CenterOnScreen()
+        {
+            var workArea = SystemParameters.WorkArea;
+            Left = Math.Max(workArea.Left, workArea.Left + (workArea.Width - Width) / 2);
+            Top = Math.Max(workArea.Top, workArea.Top + (workArea.Height - Height) / 2);
         }
 
         protected override void OnPreviewKeyDown(KeyEventArgs e)
