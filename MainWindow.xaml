@@ -14,14 +14,16 @@
         ExtendsContentIntoTitleBar="True">
 
     <Grid Background="#121212">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
-        </Grid.RowDefinitions>
+        <!-- ================= FULL APPLICATION MODE ================= -->
+        <Grid x:Name="FullModeGrid" Visibility="Visible">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
 
-        <!-- TitleBar -->
-        <ui:TitleBar Grid.Row="0" Title="Work Time Tracker • Dev &amp; Support" />
+            <!-- TitleBar -->
+            <ui:TitleBar Grid.Row="0" Title="Work Time Tracker • Dev &amp; Support" />
 
         <!-- Navigation Bar -->
         <Border Grid.Row="1" Background="#1A1A1A" BorderBrush="#2A2A2A" BorderThickness="0,0,0,1" Padding="20,10">
@@ -70,6 +72,12 @@
                     <ui:Button Content="Export Week (.xlsx)" Appearance="Secondary" Click="OnExportWeekToExcelClick" Margin="0,0,8,0" Padding="12,6">
                         <ui:Button.Icon>
                             <ui:SymbolIcon Symbol="DocumentTable24" Foreground="#107C41" />
+                        </ui:Button.Icon>
+                    </ui:Button>
+
+                    <ui:Button Content="Just Timer" Appearance="Secondary" Click="OnSwitchToMiniModeClick" Margin="0,0,8,0" Padding="12,6" ToolTip="Switch to minimal floating timer widget">
+                        <ui:Button.Icon>
+                            <ui:SymbolIcon Symbol="ArrowMinimize24" Foreground="#4CC2FF" />
                         </ui:Button.Icon>
                     </ui:Button>
 
@@ -147,9 +155,15 @@
                                     </ui:Button.Icon>
                                 </ui:Button>
 
-                                <ui:Button Content="Check-in Now" Appearance="Secondary" Click="OnPromptNowClick" Padding="12,5" ToolTip="Trigger check-in dialog now">
+                                <ui:Button Content="Check-in Now" Appearance="Secondary" Click="OnPromptNowClick" Margin="0,0,6,0" Padding="12,5" ToolTip="Trigger check-in dialog now">
                                     <ui:Button.Icon>
                                         <ui:SymbolIcon Symbol="Open24" FontSize="14" />
+                                    </ui:Button.Icon>
+                                </ui:Button>
+
+                                <ui:Button Content="Just Timer" Appearance="Secondary" Click="OnSwitchToMiniModeClick" Padding="12,5" ToolTip="Switch to minimal floating timer widget">
+                                    <ui:Button.Icon>
+                                        <ui:SymbolIcon Symbol="ArrowMinimize24" Foreground="#4CC2FF" FontSize="14" />
                                     </ui:Button.Icon>
                                 </ui:Button>
                             </StackPanel>
@@ -695,5 +709,58 @@
             </Grid>
 
         </Grid>
+        <!-- End FullModeGrid -->
+        </Grid>
+        <!-- End FullModeGrid wrapper -->
+
+        <!-- ================= MINI TIMER MODE ("JUST THE TIMER") ================= -->
+        <Border x:Name="MiniModeBorder" Visibility="Collapsed" Background="#161616" BorderBrush="#333333" BorderThickness="1" CornerRadius="8" Padding="12,10" MouseLeftButtonDown="OnMiniModeDrag">
+            <Grid VerticalAlignment="Center">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <!-- Left: Drag Grip + Status Dot + Mini Timer -->
+                <StackPanel Grid.Row="0" Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                    <ui:SymbolIcon Symbol="ReOrderDotsVertical24" FontSize="14" Foreground="#666666" Margin="0,0,8,0" Cursor="SizeAll" ToolTip="Drag to move widget"/>
+                    <Ellipse x:Name="MiniStatusDot" Width="7" Height="7" Fill="#4CC2FF" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                    <TextBlock x:Name="MiniCountdownText" Text="30:00" FontSize="18" FontWeight="Bold" FontFamily="Segoe UI Variable Display, Consolas" Foreground="#FFFFFF" VerticalAlignment="Center"/>
+                </StackPanel>
+
+                <!-- Right: Mini Controls -->
+                <StackPanel Grid.Row="0" Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                    <!-- Play / Pause -->
+                    <ui:Button x:Name="MiniBtnPlayPause" Appearance="Secondary" Padding="7,4" Margin="0,0,4,0" Click="OnMiniPlayPauseClick" ToolTip="Start / Pause">
+                        <ui:Button.Icon>
+                            <ui:SymbolIcon x:Name="MiniPlayPauseIcon" Symbol="Pause24" FontSize="12"/>
+                        </ui:Button.Icon>
+                    </ui:Button>
+
+                    <!-- Check-in Now -->
+                    <ui:Button Appearance="Primary" Padding="7,4" Margin="0,0,4,0" Click="OnPromptNowClick" ToolTip="Check-in Now">
+                        <ui:Button.Icon>
+                            <ui:SymbolIcon Symbol="AddCircle24" FontSize="12"/>
+                        </ui:Button.Icon>
+                    </ui:Button>
+
+                    <!-- Restore Full Window -->
+                    <ui:Button Appearance="Secondary" Padding="7,4" Click="OnSwitchToFullModeClick" ToolTip="Restore full window">
+                        <ui:Button.Icon>
+                            <ui:SymbolIcon Symbol="ArrowMaximize24" FontSize="12"/>
+                        </ui:Button.Icon>
+                    </ui:Button>
+                </StackPanel>
+
+                <!-- Slim Progress Bar -->
+                <ProgressBar Grid.Row="1" Grid.ColumnSpan="3" x:Name="MiniCycleProgressBar" Height="3" Margin="0,8,0,0" Value="0" Maximum="100" Foreground="#0078D4" Background="#282828"/>
+            </Grid>
+        </Border>
+
     </Grid>
 </ui:FluentWindow>

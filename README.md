@@ -9,6 +9,7 @@ A modern Windows desktop application built with **WPF (.NET 8)** and **WPF-UI** 
 - **⏱️ 30-Minute Interval Tracker**:
   - Precision countdown timer with visual progress bar.
   - Controls: Start, Pause, Reset, and Manual Check-in.
+  - **"Just Timer" Floating Mode**: One-click button to shrink the app into a sleek, draggable, always-on-top mini-widget showing just the timer, progress bar, and controls.
   - Configurable interval: 30 minutes (default), 15m, 5m, or 1m test mode.
 
 - **🔔 Automatic 30-Minute Check-in Popup**:

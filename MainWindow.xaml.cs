@@ -30,6 +30,8 @@ namespace WorkTimeTracker
 
         private DateTime _calendarCurrentMonth = new(DateTime.Today.Year, DateTime.Today.Month, 1);
         private DateTime _selectedDate = DateTime.Today;
+        private double _previousWidth = 1060;
+        private double _previousHeight = 740;
 
         public MainWindow()
         {
@@ -82,30 +84,36 @@ namespace WorkTimeTracker
         {
             CountdownText.Text = _trackerService.CountdownDisplay;
             NavCountdownText.Text = _trackerService.CountdownDisplay;
+            MiniCountdownText.Text = _trackerService.CountdownDisplay;
             CountdownSubtext.Text = $"remaining of {_trackerService.IntervalDisplay} block";
             CycleProgressBar.Value = _trackerService.ProgressPercent;
+            MiniCycleProgressBar.Value = _trackerService.ProgressPercent;
 
             if (_trackerService.IsRunning)
             {
                 StatusBadge.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#1B3A57"));
                 StatusDot.Fill = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#4CC2FF"));
                 NavStatusDot.Fill = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#4CC2FF"));
+                MiniStatusDot.Fill = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#4CC2FF"));
                 StatusBadgeText.Text = "ACTIVE";
                 StatusBadgeText.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#4CC2FF"));
 
                 BtnStart.IsEnabled = false;
                 BtnPause.IsEnabled = true;
+                MiniPlayPauseIcon.Symbol = Wpf.Ui.Controls.SymbolRegular.Pause24;
             }
             else
             {
                 StatusBadge.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#3A2A1A"));
                 StatusDot.Fill = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FFAA44"));
                 NavStatusDot.Fill = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FFAA44"));
+                MiniStatusDot.Fill = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FFAA44"));
                 StatusBadgeText.Text = "PAUSED";
                 StatusBadgeText.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FFAA44"));
 
                 BtnStart.IsEnabled = true;
                 BtnPause.IsEnabled = false;
+                MiniPlayPauseIcon.Symbol = Wpf.Ui.Controls.SymbolRegular.Play24;
             }
         }
 
@@ -349,6 +357,52 @@ namespace WorkTimeTracker
         }
 
         private void OnPromptNowClick(object sender, RoutedEventArgs e) => ShowPromptDialog();
+
+        // ================= MINI TIMER MODE ("JUST THE TIMER") =================
+        private void OnSwitchToMiniModeClick(object sender, RoutedEventArgs e)
+        {
+            _previousWidth = Width;
+            _previousHeight = Height;
+
+            MinWidth = 0;
+            MinHeight = 0;
+            Width = 320;
+            Height = 72;
+            Topmost = true;
+
+            FullModeGrid.Visibility = Visibility.Collapsed;
+            MiniModeBorder.Visibility = Visibility.Visible;
+            UpdateTrackerUi();
+        }
+
+        private void OnSwitchToFullModeClick(object sender, RoutedEventArgs e)
+        {
+            MiniModeBorder.Visibility = Visibility.Collapsed;
+            FullModeGrid.Visibility = Visibility.Visible;
+
+            MinWidth = 940;
+            MinHeight = 660;
+            Width = Math.Max(_previousWidth, 980);
+            Height = Math.Max(_previousHeight, 680);
+            Topmost = false;
+            UpdateTrackerUi();
+        }
+
+        private void OnMiniModeDrag(object sender, MouseButtonEventArgs e)
+        {
+            if (e.ChangedButton == MouseButton.Left)
+            {
+                DragMove();
+            }
+        }
+
+        private void OnMiniPlayPauseClick(object sender, RoutedEventArgs e)
+        {
+            if (_trackerService.IsRunning)
+                _trackerService.Pause();
+            else
+                _trackerService.Start();
+        }
 
         private void OnRefreshDashboardClick(object sender, RoutedEventArgs e)
         {
