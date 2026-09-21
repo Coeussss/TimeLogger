@@ -30,3 +30,14 @@ Thumbs.db
 ehthumbs.db
 Desktop.ini
 $RECYCLE.BIN/
+
+# Android
+.gradle/
+build/
+*/build/
+*.apk
+local.properties
+.externalNativeBuild/
+.cxx/
+*.iml
+

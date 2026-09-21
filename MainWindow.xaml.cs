@@ -418,14 +418,23 @@ namespace WorkTimeTracker
                 UpdateCalendarView();
                 UpdateDayEditor();
 
-                // If Android APK is built, copy it to the sync folder so it can be installed from phone!
+                // If Android APK is built, copy it to the sync folder so it can be installed directly from phone!
                 try
                 {
-                    string apkSource = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\..\..\WorkTimeTrackerAndroid\app\build\outputs\apk\debug\app-debug.apk"));
-                    if (File.Exists(apkSource))
+                    string[] candidatePaths = new[]
+                    {
+                        Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "WorkTimeTracker.apk"),
+                        Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\..\..\WorkTimeTracker.apk"),
+                        Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\..\WorkTimeTracker.apk"),
+                        Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\..\android\app\build\outputs\apk\debug\app-debug.apk"),
+                        Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\..\..\WorkTimeTrackerAndroid\app\build\outputs\apk\debug\app-debug.apk")
+                    };
+
+                    string? foundApk = candidatePaths.FirstOrDefault(p => File.Exists(Path.GetFullPath(p)));
+                    if (foundApk != null)
                     {
                         string apkDest = Path.Combine(dialog.FolderName, "WorkTimeTracker.apk");
-                        File.Copy(apkSource, apkDest, true);
+                        File.Copy(Path.GetFullPath(foundApk), apkDest, true);
                     }
                 }
                 catch { }
