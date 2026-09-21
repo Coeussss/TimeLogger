@@ -714,7 +714,7 @@
         <!-- End FullModeGrid wrapper -->
 
         <!-- ================= MINI TIMER MODE ("JUST THE TIMER") ================= -->
-        <Border x:Name="MiniModeBorder" Visibility="Collapsed" Background="#161616" BorderBrush="#333333" BorderThickness="1" CornerRadius="8" Padding="12,10" MouseLeftButtonDown="OnMiniModeDrag">
+        <Border x:Name="MiniModeBorder" Visibility="Collapsed" Background="#161616" BorderBrush="#333333" BorderThickness="1" CornerRadius="8" Padding="10,8" MouseLeftButtonDown="OnMiniModeDrag">
             <Grid VerticalAlignment="Center">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
@@ -765,7 +765,7 @@
                 </StackPanel>
 
                 <!-- Slim Progress Bar -->
-                <ProgressBar Grid.Row="1" Grid.ColumnSpan="3" x:Name="MiniCycleProgressBar" Height="3" Margin="0,8,0,0" Value="0" Maximum="100" Foreground="#0078D4" Background="#282828"/>
+                <ProgressBar Grid.Row="1" Grid.ColumnSpan="3" x:Name="MiniCycleProgressBar" Height="3" Margin="0,6,0,0" Value="0" Maximum="100" Foreground="#0078D4" Background="#282828"/>
             </Grid>
         </Border>
 

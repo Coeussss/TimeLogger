@@ -33,6 +33,10 @@ namespace WorkTimeTracker
         private double _previousWidth = 1060;
         private double _previousHeight = 740;
         private bool _isMiniMode = false;
+        public const double DefaultPinnedWidth = 246;
+        public const double DefaultPinnedHeight = 66;
+        private double _pinnedWidth = DefaultPinnedWidth;
+        private double _pinnedHeight = DefaultPinnedHeight;
 
         public MainWindow()
         {
@@ -52,6 +56,16 @@ namespace WorkTimeTracker
             UpdateTodayOverview();
             UpdateCalendarView();
             UpdateDayEditor();
+
+            Loaded += (s, e) =>
+            {
+                var args = Environment.GetCommandLineArgs();
+                if (args.Any(a => a.Equals("--pinned", StringComparison.OrdinalIgnoreCase) || 
+                                  a.Equals("--mini", StringComparison.OrdinalIgnoreCase)))
+                {
+                    OnPinToTopRightModeClick(this, new RoutedEventArgs());
+                }
+            };
         }
 
         private void OnPromptRequested()
@@ -372,10 +386,10 @@ namespace WorkTimeTracker
             _previousHeight = Height;
             _isMiniMode = true;
 
-            MinWidth = 0;
-            MinHeight = 0;
-            Width = 345;
-            Height = 74;
+            MinWidth = 200;
+            MinHeight = 48;
+            Width = _pinnedWidth;
+            Height = _pinnedHeight;
             Topmost = true;
 
             FullModeGrid.Visibility = Visibility.Collapsed;
@@ -430,6 +444,16 @@ namespace WorkTimeTracker
             {
                 OnSwitchToFullModeClick(this, new RoutedEventArgs());
                 e.Handled = true;
+            }
+        }
+
+        protected override void OnRenderSizeChanged(SizeChangedInfo sizeInfo)
+        {
+            base.OnRenderSizeChanged(sizeInfo);
+            if (_isMiniMode && sizeInfo.NewSize.Width >= 180 && sizeInfo.NewSize.Height >= 40)
+            {
+                _pinnedWidth = sizeInfo.NewSize.Width;
+                _pinnedHeight = sizeInfo.NewSize.Height;
             }
         }
 
