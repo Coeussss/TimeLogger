@@ -35,8 +35,6 @@ namespace WorkTimeTracker
         private bool _isMiniMode = false;
         public const double DefaultPinnedWidth = 246;
         public const double DefaultPinnedHeight = 66;
-        private double _pinnedWidth = DefaultPinnedWidth;
-        private double _pinnedHeight = DefaultPinnedHeight;
 
         public MainWindow()
         {
@@ -386,10 +384,10 @@ namespace WorkTimeTracker
             _previousHeight = Height;
             _isMiniMode = true;
 
-            MinWidth = 200;
-            MinHeight = 48;
-            Width = _pinnedWidth;
-            Height = _pinnedHeight;
+            MinWidth = 0;
+            MinHeight = 0;
+            Width = DefaultPinnedWidth;
+            Height = DefaultPinnedHeight;
             Topmost = true;
 
             FullModeGrid.Visibility = Visibility.Collapsed;
@@ -444,16 +442,6 @@ namespace WorkTimeTracker
             {
                 OnSwitchToFullModeClick(this, new RoutedEventArgs());
                 e.Handled = true;
-            }
-        }
-
-        protected override void OnRenderSizeChanged(SizeChangedInfo sizeInfo)
-        {
-            base.OnRenderSizeChanged(sizeInfo);
-            if (_isMiniMode && sizeInfo.NewSize.Width >= 180 && sizeInfo.NewSize.Height >= 40)
-            {
-                _pinnedWidth = sizeInfo.NewSize.Width;
-                _pinnedHeight = sizeInfo.NewSize.Height;
             }
         }
 
