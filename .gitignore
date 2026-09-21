@@ -41,3 +41,6 @@ local.properties
 .cxx/
 *.iml
 
+# Server
+server/data/
+server/.env

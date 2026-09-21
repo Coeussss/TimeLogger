@@ -46,8 +46,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.worktimetracker.model.Categories
 import com.example.worktimetracker.model.TimeLog
+import com.example.worktimetracker.ui.AndroidSyncMode
 import com.example.worktimetracker.ui.TimeTrackerViewModel
 import com.example.worktimetracker.ui.dialogs.PromptDialog
+import com.example.worktimetracker.ui.dialogs.SyncSettingsDialog
 
 @Composable
 fun HomeScreen(viewModel: TimeTrackerViewModel) {
@@ -57,6 +59,10 @@ fun HomeScreen(viewModel: TimeTrackerViewModel) {
     val isDriveLinked by viewModel.isDriveLinked.collectAsState()
     val driveFileName by viewModel.driveFileName.collectAsState()
     val allLogs by viewModel.allLogs.collectAsState()
+    val syncMode by viewModel.syncMode.collectAsState()
+    val showSyncSettingsDialog by viewModel.showSyncSettingsDialog.collectAsState()
+    val serverUrl by viewModel.serverUrl.collectAsState()
+    val serverSyncStatus by viewModel.serverSyncStatus.collectAsState()
 
     val todayLogs = viewModel.getTodayLogs()
     val todayHours = viewModel.getTodayTotalHours()
@@ -104,18 +110,39 @@ fun HomeScreen(viewModel: TimeTrackerViewModel) {
                     }
                 }
 
-                // Google Drive Sync Pill Button
+                // Sync Settings Pill Button
+                val syncLabel = when (syncMode) {
+                    AndroidSyncMode.HOME_SERVER -> if (serverSyncStatus.contains("Synced")) "🟢 Server" else "🟡 Server"
+                    AndroidSyncMode.GOOGLE_DRIVE -> if (isDriveLinked) "☁️ Drive" else "☁️ Link Drive"
+                    AndroidSyncMode.LOCAL -> "⚙ Sync"
+                }
+                val syncBg = when (syncMode) {
+                    AndroidSyncMode.HOME_SERVER -> if (serverSyncStatus.contains("Synced")) Color(0xFF173121) else Color(0xFF2E2417)
+                    AndroidSyncMode.GOOGLE_DRIVE -> if (isDriveLinked) Color(0xFF173121) else Color(0xFF242424)
+                    AndroidSyncMode.LOCAL -> Color(0xFF242424)
+                }
+                val syncBorder = when (syncMode) {
+                    AndroidSyncMode.HOME_SERVER -> if (serverSyncStatus.contains("Synced")) Color(0xFF107C41) else Color(0xFFFFAA44)
+                    AndroidSyncMode.GOOGLE_DRIVE -> if (isDriveLinked) Color(0xFF107C41) else Color(0xFF383838)
+                    AndroidSyncMode.LOCAL -> Color(0xFF383838)
+                }
+                val syncColor = when (syncMode) {
+                    AndroidSyncMode.HOME_SERVER -> if (serverSyncStatus.contains("Synced")) Color(0xFF64DB8F) else Color(0xFFFFAA44)
+                    AndroidSyncMode.GOOGLE_DRIVE -> if (isDriveLinked) Color(0xFF64DB8F) else Color(0xFF4CC2FF)
+                    AndroidSyncMode.LOCAL -> Color(0xFFCCCCCC)
+                }
+
                 Box(
                     modifier = Modifier
-                        .background(if (isDriveLinked) Color(0xFF173121) else Color(0xFF242424), RoundedCornerShape(20.dp))
-                        .border(1.dp, if (isDriveLinked) Color(0xFF107C41) else Color(0xFF383838), RoundedCornerShape(20.dp))
+                        .background(syncBg, RoundedCornerShape(20.dp))
+                        .border(1.dp, syncBorder, RoundedCornerShape(20.dp))
                         .clickable {
-                            driveFilePicker.launch(arrayOf("application/json", "*/*"))
+                            viewModel.openSyncSettings()
                         }
                         .padding(horizontal = 10.dp, vertical = 6.dp)
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(if (isDriveLinked) "☁️ Synced" else "☁️ Link Drive", fontSize = 11.sp, color = if (isDriveLinked) Color(0xFF64DB8F) else Color(0xFF4CC2FF), fontWeight = FontWeight.SemiBold)
+                        Text(syncLabel, fontSize = 11.sp, color = syncColor, fontWeight = FontWeight.SemiBold)
                     }
                 }
             }
@@ -384,6 +411,30 @@ fun HomeScreen(viewModel: TimeTrackerViewModel) {
                     viewModel.recordLog(cat, desc, mins)
                 },
                 onSnooze = { viewModel.snooze5Minutes() }
+            )
+        }
+
+        // Sync Settings Dialog
+        if (showSyncSettingsDialog) {
+            SyncSettingsDialog(
+                initialMode = syncMode,
+                currentServerUrl = serverUrl,
+                currentApiKey = viewModel.serverSyncManager.getApiKey(),
+                isDriveLinked = isDriveLinked,
+                onDismiss = { viewModel.dismissSyncSettings() },
+                onSelectDriveFile = {
+                    viewModel.dismissSyncSettings()
+                    driveFilePicker.launch(arrayOf("application/json", "*/*"))
+                },
+                onSaveHomeServer = { url, key ->
+                    viewModel.configureHomeServer(url, key)
+                },
+                onSaveLocalOnly = {
+                    viewModel.setLocalOnly()
+                },
+                onTestConnection = { url, key ->
+                    viewModel.serverSyncManager.testConnection(url, key)
+                }
             )
         }
     }

@@ -2,11 +2,28 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
 using System.Text.Json;
+using System.Threading.Tasks;
 using WorkTimeTracker.Models;
 
 namespace WorkTimeTracker.Services
 {
+    public enum SyncMode
+    {
+        Local,
+        GoogleDrive,
+        HomeServer
+    }
+
+    public class SyncConfigData
+    {
+        public SyncMode Mode { get; set; } = SyncMode.Local;
+        public string SyncFolder { get; set; } = string.Empty;
+        public string ServerUrl { get; set; } = string.Empty;
+        public string ApiKey { get; set; } = string.Empty;
+    }
+
     public class TimeLogService
     {
         public static readonly string DefaultStorageDirectory = Path.Combine(
@@ -20,12 +37,19 @@ namespace WorkTimeTracker.Services
         private FileSystemWatcher? _fileWatcher;
         private DateTime _lastFileWriteTime = DateTime.MinValue;
         private readonly object _lockObj = new();
+        private readonly HttpClient _httpClient = new() { Timeout = TimeSpan.FromSeconds(8) };
+        private System.Threading.Timer? _serverPollTimer;
 
         public event Action? LogsUpdatedExternally;
 
+        public SyncMode CurrentSyncMode { get; private set; } = SyncMode.Local;
+        public string ServerUrl { get; private set; } = string.Empty;
+        public string ApiKey { get; private set; } = string.Empty;
+
         public string CurrentStorageDirectory => _activeDirectory;
         public string CurrentStorageFilePath => _activeFilePath;
-        public bool IsCloudSyncActive => !string.Equals(_activeDirectory, DefaultStorageDirectory, StringComparison.OrdinalIgnoreCase);
+        public bool IsCloudSyncActive => CurrentSyncMode != SyncMode.Local;
+        public bool IsHomeServerActive => CurrentSyncMode == SyncMode.HomeServer;
 
         public static readonly List<string> DefaultCategories = new()
         {
@@ -72,6 +96,10 @@ namespace WorkTimeTracker.Services
         {
             _logs.Add(log);
             SaveLogs();
+            if (CurrentSyncMode == SyncMode.HomeServer)
+            {
+                _ = SyncWithServerAsync();
+            }
         }
 
         public void UpdateLog(TimeLog updatedLog)
@@ -84,6 +112,10 @@ namespace WorkTimeTracker.Services
                 existing.Category = updatedLog.Category;
                 existing.Description = updatedLog.Description;
                 SaveLogs();
+                if (CurrentSyncMode == SyncMode.HomeServer)
+                {
+                    _ = SyncWithServerAsync();
+                }
             }
         }
 
@@ -94,6 +126,10 @@ namespace WorkTimeTracker.Services
             {
                 _logs.Remove(existing);
                 SaveLogs();
+                if (CurrentSyncMode == SyncMode.HomeServer)
+                {
+                    _ = DeleteLogFromServerAsync(id);
+                }
             }
         }
 
@@ -236,13 +272,25 @@ namespace WorkTimeTracker.Services
                 if (File.Exists(ConfigFilePath))
                 {
                     string json = File.ReadAllText(ConfigFilePath);
-                    using var doc = JsonDocument.Parse(json);
-                    if (doc.RootElement.TryGetProperty("SyncFolder", out var prop))
+                    var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                    var config = JsonSerializer.Deserialize<SyncConfigData>(json, options);
+                    if (config != null)
                     {
-                        string? folder = prop.GetString();
-                        if (!string.IsNullOrWhiteSpace(folder) && Directory.Exists(folder))
+                        if (config.Mode == SyncMode.HomeServer && !string.IsNullOrWhiteSpace(config.ServerUrl))
                         {
-                            _activeDirectory = folder;
+                            CurrentSyncMode = SyncMode.HomeServer;
+                            ServerUrl = config.ServerUrl;
+                            ApiKey = config.ApiKey;
+                            _activeDirectory = DefaultStorageDirectory;
+                            _activeFilePath = Path.Combine(DefaultStorageDirectory, "timelogs.json");
+                            StartServerPolling();
+                            _ = SyncWithServerAsync();
+                            return;
+                        }
+                        else if (!string.IsNullOrWhiteSpace(config.SyncFolder) && Directory.Exists(config.SyncFolder))
+                        {
+                            CurrentSyncMode = SyncMode.GoogleDrive;
+                            _activeDirectory = config.SyncFolder;
                             _activeFilePath = Path.Combine(_activeDirectory, "timelogs.json");
                             return;
                         }
@@ -273,30 +321,50 @@ namespace WorkTimeTracker.Services
                     try
                     {
                         Directory.CreateDirectory(target);
+                        CurrentSyncMode = SyncMode.GoogleDrive;
                         _activeDirectory = target;
                         _activeFilePath = Path.Combine(_activeDirectory, "timelogs.json");
-                        SaveSyncConfig(_activeDirectory);
+                        SaveSyncConfig();
                         return;
                     }
                     catch { }
                 }
             }
 
+            CurrentSyncMode = SyncMode.Local;
             _activeDirectory = DefaultStorageDirectory;
             _activeFilePath = Path.Combine(DefaultStorageDirectory, "timelogs.json");
         }
 
-        public void SetCustomStorageDirectory(string newDirectory)
+        public async Task ConfigureHomeServerAsync(string url, string apiKey)
         {
+            StopServerPolling();
+            CurrentSyncMode = SyncMode.HomeServer;
+            ServerUrl = url.Trim();
+            ApiKey = apiKey.Trim();
+            _activeDirectory = DefaultStorageDirectory;
+            _activeFilePath = Path.Combine(DefaultStorageDirectory, "timelogs.json");
+
+            SaveSyncConfig();
+            SetupFileWatcher();
+            StartServerPolling();
+            await SyncWithServerAsync();
+            LogsUpdatedExternally?.Invoke();
+        }
+
+        public void ConfigureGoogleDrive(string newDirectory)
+        {
+            StopServerPolling();
             if (string.IsNullOrWhiteSpace(newDirectory))
             {
-                ResetToDefaultLocalDirectory();
+                ResetToLocal();
                 return;
             }
 
             try
             {
                 Directory.CreateDirectory(newDirectory);
+                CurrentSyncMode = SyncMode.GoogleDrive;
                 _activeDirectory = newDirectory;
                 _activeFilePath = Path.Combine(_activeDirectory, "timelogs.json");
 
@@ -310,29 +378,182 @@ namespace WorkTimeTracker.Services
                     LoadLogs();
                 }
 
-                SaveSyncConfig(_activeDirectory);
+                SaveSyncConfig();
                 SetupFileWatcher();
                 LogsUpdatedExternally?.Invoke();
             }
             catch { }
         }
 
-        public void ResetToDefaultLocalDirectory()
+        public void SetCustomStorageDirectory(string newDirectory)
         {
+            ConfigureGoogleDrive(newDirectory);
+        }
+
+        public void ResetToLocal()
+        {
+            StopServerPolling();
+            CurrentSyncMode = SyncMode.Local;
+            ServerUrl = string.Empty;
+            ApiKey = string.Empty;
             _activeDirectory = DefaultStorageDirectory;
             _activeFilePath = Path.Combine(DefaultStorageDirectory, "timelogs.json");
-            SaveSyncConfig(string.Empty);
+            SaveSyncConfig();
             SetupFileWatcher();
             LoadLogs();
             LogsUpdatedExternally?.Invoke();
         }
 
-        private void SaveSyncConfig(string folder)
+        public void ResetToDefaultLocalDirectory()
+        {
+            ResetToLocal();
+        }
+
+        public async Task<(bool Success, string Message)> TestServerConnectionAsync(string url, string apiKey)
+        {
+            if (string.IsNullOrWhiteSpace(url))
+                return (false, "Server URL cannot be empty.");
+
+            if (!Uri.TryCreate(url, UriKind.Absolute, out var uri))
+                return (false, "Invalid URL format. Please include http:// or https:// (e.g. http://myhome.ddns.net:48291).");
+
+            try
+            {
+                var healthUrl = url.TrimEnd('/') + "/api/health";
+                var healthResponse = await _httpClient.GetAsync(healthUrl);
+                if (!healthResponse.IsSuccessStatusCode)
+                {
+                    return (false, $"Health check failed with status: {healthResponse.StatusCode}");
+                }
+
+                var logsUrl = url.TrimEnd('/') + "/api/logs";
+                using var logsRequest = new HttpRequestMessage(HttpMethod.Get, logsUrl);
+                if (!string.IsNullOrWhiteSpace(apiKey))
+                {
+                    logsRequest.Headers.Add("X-API-Key", apiKey.Trim());
+                }
+
+                var logsResponse = await _httpClient.SendAsync(logsRequest);
+                if (logsResponse.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+                {
+                    return (false, "Connected to server, but the API Key was rejected (401 Unauthorized). Please check your API_KEY.");
+                }
+
+                if (!logsResponse.IsSuccessStatusCode)
+                {
+                    return (false, $"Server returned error: {logsResponse.StatusCode}");
+                }
+
+                return (true, "Successfully connected to WorkTimeTracker Docker Server!");
+            }
+            catch (Exception ex)
+            {
+                return (false, $"Connection error: {ex.Message}");
+            }
+        }
+
+        public async Task SyncWithServerAsync()
+        {
+            if (CurrentSyncMode != SyncMode.HomeServer || string.IsNullOrWhiteSpace(ServerUrl))
+                return;
+
+            try
+            {
+                var requestUrl = ServerUrl.TrimEnd('/') + "/api/logs/sync";
+                using var request = new HttpRequestMessage(HttpMethod.Post, requestUrl);
+                if (!string.IsNullOrWhiteSpace(ApiKey))
+                {
+                    request.Headers.Add("X-API-Key", ApiKey.Trim());
+                }
+
+                List<TimeLog> currentLogsCopy;
+                lock (_lockObj)
+                {
+                    currentLogsCopy = _logs.ToList();
+                }
+
+                var jsonPayload = JsonSerializer.Serialize(currentLogsCopy);
+                request.Content = new StringContent(jsonPayload, System.Text.Encoding.UTF8, "application/json");
+
+                var response = await _httpClient.SendAsync(request);
+                if (response.IsSuccessStatusCode)
+                {
+                    var responseJson = await response.Content.ReadAsStringAsync();
+                    var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                    var serverLogs = JsonSerializer.Deserialize<List<TimeLog>>(responseJson, options);
+                    if (serverLogs != null)
+                    {
+                        bool hasDifferences = false;
+                        lock (_lockObj)
+                        {
+                            if (serverLogs.Count != _logs.Count || !serverLogs.Select(s => s.Id).SequenceEqual(_logs.Select(l => l.Id)))
+                            {
+                                hasDifferences = true;
+                                _logs.Clear();
+                                _logs.AddRange(serverLogs);
+                            }
+                        }
+
+                        if (hasDifferences)
+                        {
+                            SaveLogs();
+                            System.Windows.Application.Current?.Dispatcher?.Invoke(() =>
+                            {
+                                LogsUpdatedExternally?.Invoke();
+                            });
+                        }
+                    }
+                }
+            }
+            catch { }
+        }
+
+        private async Task DeleteLogFromServerAsync(Guid id)
+        {
+            if (CurrentSyncMode != SyncMode.HomeServer || string.IsNullOrWhiteSpace(ServerUrl))
+                return;
+
+            try
+            {
+                var url = ServerUrl.TrimEnd('/') + $"/api/logs/{id}";
+                using var req = new HttpRequestMessage(HttpMethod.Delete, url);
+                if (!string.IsNullOrWhiteSpace(ApiKey))
+                {
+                    req.Headers.Add("X-API-Key", ApiKey.Trim());
+                }
+                await _httpClient.SendAsync(req);
+            }
+            catch { }
+        }
+
+        private void StartServerPolling()
+        {
+            StopServerPolling();
+            _serverPollTimer = new System.Threading.Timer(async _ =>
+            {
+                await SyncWithServerAsync();
+            }, null, TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(30));
+        }
+
+        private void StopServerPolling()
+        {
+            _serverPollTimer?.Dispose();
+            _serverPollTimer = null;
+        }
+
+        private void SaveSyncConfig()
         {
             try
             {
                 Directory.CreateDirectory(DefaultStorageDirectory);
-                string json = JsonSerializer.Serialize(new { SyncFolder = folder }, new JsonSerializerOptions { WriteIndented = true });
+                var config = new SyncConfigData
+                {
+                    Mode = CurrentSyncMode,
+                    SyncFolder = CurrentSyncMode == SyncMode.GoogleDrive ? _activeDirectory : string.Empty,
+                    ServerUrl = ServerUrl,
+                    ApiKey = ApiKey
+                };
+                string json = JsonSerializer.Serialize(config, new JsonSerializerOptions { WriteIndented = true });
                 File.WriteAllText(ConfigFilePath, json);
             }
             catch { }

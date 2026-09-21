@@ -69,7 +69,7 @@
                         </StackPanel>
                     </Border>
 
-                    <ui:Button x:Name="BtnCloudSync" Content="Google Drive Sync" Appearance="Secondary" Click="OnCloudSyncFolderClick" Margin="0,0,8,0" Padding="12,6" ToolTip="Configure or link Google Drive folder to sync data with your Android phone">
+                    <ui:Button x:Name="BtnCloudSync" Content="Sync Settings" Appearance="Secondary" Click="OnCloudSyncFolderClick" Margin="0,0,8,0" Padding="12,6" ToolTip="Configure Home Server (Docker) or Google Drive sync">
                         <ui:Button.Icon>
                             <ui:SymbolIcon Symbol="CloudSync24" Foreground="#4CC2FF" />
                         </ui:Button.Icon>

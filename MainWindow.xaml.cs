@@ -386,60 +386,39 @@ namespace WorkTimeTracker
         private void UpdateCloudSyncButtonState()
         {
             if (BtnCloudSync == null) return;
-            if (_logService.IsCloudSyncActive)
+
+            if (_logService.CurrentSyncMode == SyncMode.HomeServer)
+            {
+                BtnCloudSync.Content = "Home Server (Active)";
+                BtnCloudSync.ToolTip = $"Syncing with Home Server:\n{_logService.ServerUrl}\nEntries automatically synchronize with your Docker backend.";
+            }
+            else if (_logService.CurrentSyncMode == SyncMode.GoogleDrive)
             {
                 BtnCloudSync.Content = "Google Drive (Active)";
-                BtnCloudSync.ToolTip = $"Syncing with: {_logService.CurrentStorageFilePath}\nChanges from phone auto-refresh.";
+                BtnCloudSync.ToolTip = $"Syncing with Google Drive:\n{_logService.CurrentStorageFilePath}\nChanges from phone auto-refresh.";
             }
             else
             {
-                BtnCloudSync.Content = "Google Drive Sync";
-                BtnCloudSync.ToolTip = "Click to select your Google Drive folder to synchronize time logs with your Android phone.";
+                BtnCloudSync.Content = "Sync Settings";
+                BtnCloudSync.ToolTip = "Configure Home Server (Docker) or Google Drive sync to track work on phone and PC.";
             }
         }
 
         private void OnCloudSyncFolderClick(object sender, RoutedEventArgs e)
         {
-            var dialog = new Microsoft.Win32.OpenFolderDialog
+            var dialog = new SyncSettingsDialog(_logService)
             {
-                Title = "Select Google Drive / Cloud Sync Folder for WorkTimeTracker",
-                InitialDirectory = Directory.Exists(_logService.CurrentStorageDirectory) 
-                    ? _logService.CurrentStorageDirectory 
-                    : Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)
+                Owner = this
             };
 
-            if (dialog.ShowDialog() == true && !string.IsNullOrWhiteSpace(dialog.FolderName))
+            if (dialog.ShowDialog() == true && dialog.ConfigurationChanged)
             {
-                _logService.SetCustomStorageDirectory(dialog.FolderName);
                 UpdateCloudSyncButtonState();
                 UpdateTrackerUi();
                 UpdateDashboard();
                 UpdateTodayOverview();
                 UpdateCalendarView();
                 UpdateDayEditor();
-
-                // If Android APK is built, copy it to the sync folder so it can be installed directly from phone!
-                try
-                {
-                    string[] candidatePaths = new[]
-                    {
-                        Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "WorkTimeTracker.apk"),
-                        Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\..\..\WorkTimeTracker.apk"),
-                        Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\..\WorkTimeTracker.apk"),
-                        Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\..\android\app\build\outputs\apk\debug\app-debug.apk"),
-                        Path.Combine(AppDomain.CurrentDomain.BaseDirectory, @"..\..\..\..\WorkTimeTrackerAndroid\app\build\outputs\apk\debug\app-debug.apk")
-                    };
-
-                    string? foundApk = candidatePaths.FirstOrDefault(p => File.Exists(Path.GetFullPath(p)));
-                    if (foundApk != null)
-                    {
-                        string apkDest = Path.Combine(dialog.FolderName, "WorkTimeTracker.apk");
-                        File.Copy(Path.GetFullPath(foundApk), apkDest, true);
-                    }
-                }
-                catch { }
-
-                System.Windows.MessageBox.Show($"Sync folder set to:\n{dialog.FolderName}\n\nFile: {_logService.CurrentStorageFilePath}\n\nAny entries logged from your Android phone will auto-refresh here in real time.", "Google Drive Sync Configured", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
             }
         }
 

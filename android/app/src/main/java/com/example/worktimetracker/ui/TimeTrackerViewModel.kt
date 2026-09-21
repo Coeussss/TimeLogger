@@ -1,10 +1,12 @@
 package com.example.worktimetracker.ui
 
 import android.app.Application
+import android.content.Context
 import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.worktimetracker.data.GoogleDriveSyncManager
+import com.example.worktimetracker.data.ServerSyncManager
 import com.example.worktimetracker.model.TimeLog
 import com.example.worktimetracker.service.IntervalNotificationHelper
 import kotlinx.coroutines.Job
@@ -18,9 +20,17 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.UUID
 
+enum class AndroidSyncMode {
+    LOCAL,
+    GOOGLE_DRIVE,
+    HOME_SERVER
+}
+
 class TimeTrackerViewModel(application: Application) : AndroidViewModel(application) {
 
-    private val syncManager = GoogleDriveSyncManager(application)
+    private val prefs = application.getSharedPreferences("app_sync_prefs", Context.MODE_PRIVATE)
+    private val driveSyncManager = GoogleDriveSyncManager(application)
+    val serverSyncManager = ServerSyncManager(application)
     private val notificationHelper = IntervalNotificationHelper(application)
 
     private val _timeRemaining = MutableStateFlow(1800) // 30 mins in seconds
@@ -35,17 +45,48 @@ class TimeTrackerViewModel(application: Application) : AndroidViewModel(applicat
     private val _showPromptDialog = MutableStateFlow(false)
     val showPromptDialog: StateFlow<Boolean> = _showPromptDialog.asStateFlow()
 
-    private val _isDriveLinked = MutableStateFlow(syncManager.isLinked())
+    private val _showSyncSettingsDialog = MutableStateFlow(false)
+    val showSyncSettingsDialog: StateFlow<Boolean> = _showSyncSettingsDialog.asStateFlow()
+
+    private val _syncMode = MutableStateFlow(loadInitialSyncMode())
+    val syncMode: StateFlow<AndroidSyncMode> = _syncMode.asStateFlow()
+
+    private val _isDriveLinked = MutableStateFlow(driveSyncManager.isLinked())
     val isDriveLinked: StateFlow<Boolean> = _isDriveLinked.asStateFlow()
 
-    private val _driveFileName = MutableStateFlow(syncManager.getLinkedFileName())
+    private val _driveFileName = MutableStateFlow(driveSyncManager.getLinkedFileName())
     val driveFileName: StateFlow<String> = _driveFileName.asStateFlow()
+
+    private val _serverUrl = MutableStateFlow(serverSyncManager.getServerUrl() ?: "")
+    val serverUrl: StateFlow<String> = _serverUrl.asStateFlow()
+
+    private val _serverSyncStatus = MutableStateFlow("Ready")
+    val serverSyncStatus: StateFlow<String> = _serverSyncStatus.asStateFlow()
 
     private var timerJob: Job? = null
 
     init {
         refreshLogs()
         startTimer()
+    }
+
+    private fun loadInitialSyncMode(): AndroidSyncMode {
+        val saved = prefs.getString("sync_mode", null)
+        if (saved != null) {
+            return try { AndroidSyncMode.valueOf(saved) } catch (e: Exception) { AndroidSyncMode.LOCAL }
+        }
+        return if (serverSyncManager.isConfigured()) {
+            AndroidSyncMode.HOME_SERVER
+        } else if (driveSyncManager.isLinked()) {
+            AndroidSyncMode.GOOGLE_DRIVE
+        } else {
+            AndroidSyncMode.LOCAL
+        }
+    }
+
+    private fun saveSyncMode(mode: AndroidSyncMode) {
+        _syncMode.value = mode
+        prefs.edit().putString("sync_mode", mode.name).apply()
     }
 
     fun startTimer() {
@@ -85,6 +126,14 @@ class TimeTrackerViewModel(application: Application) : AndroidViewModel(applicat
         _showPromptDialog.value = false
     }
 
+    fun openSyncSettings() {
+        _showSyncSettingsDialog.value = true
+    }
+
+    fun dismissSyncSettings() {
+        _showSyncSettingsDialog.value = false
+    }
+
     fun snooze5Minutes() {
         _timeRemaining.value = 300 // 5 mins
         _isRunning.value = true
@@ -106,36 +155,99 @@ class TimeTrackerViewModel(application: Application) : AndroidViewModel(applicat
         _showPromptDialog.value = false
 
         viewModelScope.launch {
-            syncManager.saveLogs(updated)
+            when (_syncMode.value) {
+                AndroidSyncMode.HOME_SERVER -> {
+                    serverSyncManager.saveLogsToLocalCache(updated)
+                    _serverSyncStatus.value = "Syncing..."
+                    val res = serverSyncManager.syncLogs(updated)
+                    if (res.isSuccess) {
+                        _allLogs.value = res.getOrNull() ?: updated
+                        _serverSyncStatus.value = "Synced ✓"
+                    } else {
+                        _serverSyncStatus.value = "Offline (Cached)"
+                    }
+                }
+                AndroidSyncMode.GOOGLE_DRIVE -> {
+                    driveSyncManager.saveLogs(updated)
+                }
+                AndroidSyncMode.LOCAL -> {
+                    serverSyncManager.saveLogsToLocalCache(updated)
+                }
+            }
         }
     }
 
     fun deleteLog(id: String) {
         val updated = _allLogs.value.filter { it.id != id }
         _allLogs.value = updated
+
         viewModelScope.launch {
-            syncManager.saveLogs(updated)
+            when (_syncMode.value) {
+                AndroidSyncMode.HOME_SERVER -> {
+                    serverSyncManager.saveLogsToLocalCache(updated)
+                    serverSyncManager.deleteLogOnServer(id)
+                    val res = serverSyncManager.syncLogs(updated)
+                    if (res.isSuccess) {
+                        _allLogs.value = res.getOrNull() ?: updated
+                    }
+                }
+                AndroidSyncMode.GOOGLE_DRIVE -> {
+                    driveSyncManager.saveLogs(updated)
+                }
+                AndroidSyncMode.LOCAL -> {
+                    serverSyncManager.saveLogsToLocalCache(updated)
+                }
+            }
         }
     }
 
-    fun linkDriveFile(uri: Uri, name: String = "timelogs.json") {
-        syncManager.saveLinkedUri(uri, name)
-        _isDriveLinked.value = syncManager.isLinked()
-        _driveFileName.value = name
+    fun configureHomeServer(url: String, apiKey: String) {
+        serverSyncManager.saveConfig(url, apiKey)
+        _serverUrl.value = url.trim().trimEnd('/')
+        saveSyncMode(AndroidSyncMode.HOME_SERVER)
         refreshLogs()
     }
 
-    fun unlinkDrive() {
-        syncManager.unlink()
-        _isDriveLinked.value = false
-        _driveFileName.value = "Local Cache"
+    fun linkDriveFile(uri: Uri, name: String = "timelogs.json") {
+        driveSyncManager.saveLinkedUri(uri, name)
+        _isDriveLinked.value = driveSyncManager.isLinked()
+        _driveFileName.value = name
+        saveSyncMode(AndroidSyncMode.GOOGLE_DRIVE)
+        refreshLogs()
+    }
+
+    fun setLocalOnly() {
+        saveSyncMode(AndroidSyncMode.LOCAL)
+        refreshLogs()
     }
 
     fun refreshLogs() {
         viewModelScope.launch {
-            val loaded = syncManager.loadLogs()
-            _allLogs.value = loaded
-            _isDriveLinked.value = syncManager.isLinked()
+            when (_syncMode.value) {
+                AndroidSyncMode.HOME_SERVER -> {
+                    val cached = serverSyncManager.loadFromLocalCache()
+                    if (cached.isNotEmpty()) {
+                        _allLogs.value = cached
+                    }
+                    _serverSyncStatus.value = "Syncing..."
+                    val res = serverSyncManager.syncLogs(_allLogs.value)
+                    if (res.isSuccess) {
+                        _allLogs.value = res.getOrNull() ?: _allLogs.value
+                        _serverSyncStatus.value = "Synced ✓"
+                    } else {
+                        _serverSyncStatus.value = "Offline (Cached)"
+                    }
+                }
+                AndroidSyncMode.GOOGLE_DRIVE -> {
+                    val loaded = driveSyncManager.loadLogs()
+                    _allLogs.value = loaded
+                    _isDriveLinked.value = driveSyncManager.isLinked()
+                }
+                AndroidSyncMode.LOCAL -> {
+                    val cached = serverSyncManager.loadFromLocalCache()
+                    _allLogs.value = cached
+                }
+            }
         }
     }
 
