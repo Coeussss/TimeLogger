@@ -1,0 +1,686 @@
+<ui:FluentWindow x:Class="WorkTimeTracker.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+        xmlns:local="clr-namespace:WorkTimeTracker"
+        mc:Ignorable="d"
+        Title="Work Time Tracker"
+        Height="740" Width="1060"
+        MinHeight="660" MinWidth="940"
+        WindowStartupLocation="CenterScreen"
+        WindowBackdropType="Mica"
+        ExtendsContentIntoTitleBar="True">
+
+    <Grid Background="#121212">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- TitleBar -->
+        <ui:TitleBar Grid.Row="0" Title="Work Time Tracker • Dev &amp; Support" />
+
+        <!-- Navigation Bar -->
+        <Border Grid.Row="1" Background="#1A1A1A" BorderBrush="#2A2A2A" BorderThickness="0,0,0,1" Padding="20,10">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <!-- Brand / Logo -->
+                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Border Width="32" Height="32" CornerRadius="6" Background="#0078D4" Margin="0,0,10,0">
+                        <ui:SymbolIcon Symbol="Clock24" FontSize="18" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="Work Time Tracker" FontWeight="Bold" FontSize="14" Foreground="#FFFFFF"/>
+                        <TextBlock Text="30-Min Interval &amp; Support Logger" FontSize="11" Foreground="#888888"/>
+                    </StackPanel>
+                </StackPanel>
+
+                <!-- Navigation Tabs (3 Views) -->
+                <Border Grid.Column="1" Background="#242424" CornerRadius="8" Padding="3" HorizontalAlignment="Center">
+                    <StackPanel Orientation="Horizontal">
+                        <RadioButton x:Name="TabTrackerRadio" Content="⏱️  Tracker &amp; Timer" IsChecked="True" 
+                                     GroupName="NavTabs" Style="{StaticResource {x:Type ToggleButton}}" 
+                                     Padding="14,6" Margin="2,0" Checked="OnNavTabChanged" />
+                        <RadioButton x:Name="TabDashboardRadio" Content="📊  Weekly Dashboard" 
+                                     GroupName="NavTabs" Style="{StaticResource {x:Type ToggleButton}}" 
+                                     Padding="14,6" Margin="2,0" Checked="OnNavTabChanged" />
+                        <RadioButton x:Name="TabCalendarRadio" Content="📅  Calendar &amp; Day Editor" 
+                                     GroupName="NavTabs" Style="{StaticResource {x:Type ToggleButton}}" 
+                                     Padding="14,6" Margin="2,0" Checked="OnNavTabChanged" />
+                    </StackPanel>
+                </Border>
+
+                <!-- Fast Actions -->
+                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                    <ui:Button Content="Export Week (.xlsx)" Appearance="Secondary" Click="OnExportWeekToExcelClick" Margin="0,0,8,0" Padding="12,6">
+                        <ui:Button.Icon>
+                            <ui:SymbolIcon Symbol="DocumentTable24" Foreground="#107C41" />
+                        </ui:Button.Icon>
+                    </ui:Button>
+
+                    <ui:Button Content="Check-in Now" Appearance="Primary" Click="OnPromptNowClick" Padding="14,6">
+                        <ui:Button.Icon>
+                            <ui:SymbolIcon Symbol="AddCircle24" />
+                        </ui:Button.Icon>
+                    </ui:Button>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Main Body -->
+        <Grid Grid.Row="2" Margin="20,16,20,16">
+
+            <!-- ================= VIEW 1: TRACKER VIEW ================= -->
+            <Grid x:Name="TrackerView" Visibility="Visible">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <!-- Main Countdown Card -->
+                <ui:Card Grid.Row="0" Padding="32,24" Margin="0,0,0,16">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <!-- Status Badge -->
+                        <Border x:Name="StatusBadge" HorizontalAlignment="Center" Background="#1B3A57" CornerRadius="12" Padding="12,4" Margin="0,0,0,14">
+                            <StackPanel Orientation="Horizontal">
+                                <Ellipse x:Name="StatusDot" Width="8" Height="8" Fill="#4CC2FF" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                <TextBlock x:Name="StatusBadgeText" Text="TRACKING ACTIVE" FontSize="11" FontWeight="Bold" Foreground="#4CC2FF" />
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Countdown Numbers -->
+                        <TextBlock Grid.Row="1" x:Name="CountdownText" Text="30:00" 
+                                   FontSize="72" FontWeight="Bold" FontFamily="Segoe UI Variable Display, Segoe UI, Consolas"
+                                   HorizontalAlignment="Center" Foreground="#FFFFFF" Margin="0,0,0,4"/>
+
+                        <TextBlock Grid.Row="2" x:Name="CountdownSubtext" Text="remaining until next 30-minute check-in prompt" 
+                                   FontSize="13" Foreground="#888888" HorizontalAlignment="Center" Margin="0,0,0,20"/>
+
+                        <!-- Progress Bar -->
+                        <Grid Grid.Row="3" Margin="20,0,20,20">
+                            <ProgressBar x:Name="CycleProgressBar" Height="8" Value="0" Maximum="100" Foreground="#0078D4" Background="#2C2C2C"/>
+                        </Grid>
+
+                        <!-- Control Buttons -->
+                        <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Center">
+                            <ui:Button x:Name="BtnStart" Content="Start Timer" Appearance="Primary" Click="OnStartClick" Margin="0,0,10,0" Padding="20,8">
+                                <ui:Button.Icon>
+                                    <ui:SymbolIcon Symbol="Play24" />
+                                </ui:Button.Icon>
+                            </ui:Button>
+
+                            <ui:Button x:Name="BtnPause" Content="Pause" Appearance="Secondary" Click="OnPauseClick" Margin="0,0,10,0" Padding="20,8">
+                                <ui:Button.Icon>
+                                    <ui:SymbolIcon Symbol="Pause24" />
+                                </ui:Button.Icon>
+                            </ui:Button>
+
+                            <ui:Button Content="Reset Cycle" Appearance="Secondary" Click="OnResetClick" Margin="0,0,10,0" Padding="16,8">
+                                <ui:Button.Icon>
+                                    <ui:SymbolIcon Symbol="ArrowReset24" />
+                                </ui:Button.Icon>
+                            </ui:Button>
+
+                            <ui:Button Content="Trigger Prompt Now" Appearance="Secondary" Click="OnPromptNowClick" Padding="16,8">
+                                <ui:Button.Icon>
+                                    <ui:SymbolIcon Symbol="Open24" />
+                                </ui:Button.Icon>
+                            </ui:Button>
+                        </StackPanel>
+                    </Grid>
+                </ui:Card>
+
+                <!-- Settings / Info Row -->
+                <Grid Grid.Row="1" Margin="0,0,0,16">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Interval Setting -->
+                    <ui:Card Grid.Column="0" Padding="18,14" Margin="0,0,8,0">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel VerticalAlignment="Center">
+                                <TextBlock Text="Timer Interval" FontWeight="SemiBold" FontSize="13" Foreground="#FFFFFF"/>
+                                <TextBlock Text="Time between automatic popups" FontSize="11" Foreground="#888888"/>
+                            </StackPanel>
+                            <ComboBox Grid.Column="1" x:Name="IntervalSelector" SelectionChanged="OnIntervalSelectorChanged" Width="170" VerticalAlignment="Center">
+                                <ComboBoxItem Content="30 Minutes (Default)" IsSelected="True" Tag="30" />
+                                <ComboBoxItem Content="15 Minutes" Tag="15" />
+                                <ComboBoxItem Content="5 Minutes" Tag="5" />
+                                <ComboBoxItem Content="1 Minute (Fast Test)" Tag="1" />
+                                <ComboBoxItem Content="30 Seconds (Demo)" Tag="0.5" />
+                            </ComboBox>
+                        </Grid>
+                    </ui:Card>
+
+                    <!-- Today's Quick Summary & 7.5h Target -->
+                    <ui:Card Grid.Column="1" Padding="18,14" Margin="8,0,0,0">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Border x:Name="TodayTargetBadgeBorder" Width="36" Height="36" CornerRadius="18" Background="#243324" Margin="0,0,12,0" VerticalAlignment="Center">
+                                <TextBlock x:Name="TodayTargetCheckText" Text="✓" FontSize="18" FontWeight="Bold" Foreground="#57D9A3" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                <TextBlock x:Name="TodayTotalText" Text="Today: 0h 00m / 7.5h" FontWeight="Bold" FontSize="13" Foreground="#FFFFFF"/>
+                                <TextBlock x:Name="WeekTotalOverviewText" Text="This Week: 0h 00m total" FontSize="11" Foreground="#888888"/>
+                            </StackPanel>
+                        </Grid>
+                    </ui:Card>
+                </Grid>
+
+                <!-- Software Dev & Support Quick Reference Banner -->
+                <ui:Card Grid.Row="2" Padding="16,12" VerticalAlignment="Top">
+                    <StackPanel>
+                        <TextBlock Text="Categories Configured for Software Development &amp; Prod Support" FontWeight="SemiBold" FontSize="12" Foreground="#888888" Margin="0,0,0,8"/>
+                        <WrapPanel>
+                            <Border Background="#1C2E42" CornerRadius="4" Padding="8,4" Margin="0,0,8,6">
+                                <TextBlock Text="💻 Coding &amp; Dev" FontSize="11" Foreground="#4CC2FF"/>
+                            </Border>
+                            <Border Background="#3B1C1D" CornerRadius="4" Padding="8,4" Margin="0,0,8,6">
+                                <TextBlock Text="🚨 Prod Incidents &amp; Triage" FontSize="11" Foreground="#FF6B68"/>
+                            </Border>
+                            <Border Background="#3D2914" CornerRadius="4" Padding="8,4" Margin="0,0,8,6">
+                                <TextBlock Text="🎫 Prod Support &amp; Monitoring" FontSize="11" Foreground="#FFAA44"/>
+                            </Border>
+                            <Border Background="#3A1C2B" CornerRadius="4" Padding="8,4" Margin="0,0,8,6">
+                                <TextBlock Text="🐛 Bug Fixing" FontSize="11" Foreground="#FF6492"/>
+                            </Border>
+                            <Border Background="#2C203E" CornerRadius="4" Padding="8,4" Margin="0,0,8,6">
+                                <TextBlock Text="🔍 Code Review &amp; PRs" FontSize="11" Foreground="#B99BFF"/>
+                            </Border>
+                            <Border Background="#173121" CornerRadius="4" Padding="8,4" Margin="0,0,8,6">
+                                <TextBlock Text="🚀 Deployments &amp; Releases" FontSize="11" Foreground="#64DB8F"/>
+                            </Border>
+                            <Border Background="#252438" CornerRadius="4" Padding="8,4" Margin="0,0,8,6">
+                                <TextBlock Text="👥 Standups &amp; Meetings" FontSize="11" Foreground="#8FA4FF"/>
+                            </Border>
+                        </WrapPanel>
+                    </StackPanel>
+                </ui:Card>
+            </Grid>
+
+            <!-- ================= VIEW 2: WEEKLY DASHBOARD ================= -->
+            <Grid x:Name="DashboardView" Visibility="Collapsed">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <!-- Week Header Bar -->
+                <Grid Grid.Row="0" Margin="0,0,0,16">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel>
+                        <TextBlock Text="WEEKLY SUMMARY &amp; TOTALS" FontSize="11" FontWeight="Bold" Foreground="#888888" />
+                        <TextBlock x:Name="WeekRangeText" Text="Current Work Week: Mon, Sep 21 - Fri, Sep 25" FontSize="20" FontWeight="Bold" Foreground="#FFFFFF" Margin="0,2,0,0"/>
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                        <ui:Button Content="Export to Excel (.xlsx)" Appearance="Primary" Click="OnExportWeekToExcelClick" Padding="14,6" Margin="0,0,8,0">
+                            <ui:Button.Icon>
+                                <ui:SymbolIcon Symbol="DocumentTable24" />
+                            </ui:Button.Icon>
+                        </ui:Button>
+
+                        <ui:Button Content="Refresh" Appearance="Secondary" Click="OnRefreshDashboardClick" Padding="12,6">
+                            <ui:Button.Icon>
+                                <ui:SymbolIcon Symbol="ArrowSync24" />
+                            </ui:Button.Icon>
+                        </ui:Button>
+                    </StackPanel>
+                </Grid>
+
+                <!-- Top Metric Cards -->
+                <Grid Grid.Row="1" Margin="0,0,0,16">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Metric 1: Total Hours -->
+                    <ui:Card Grid.Column="0" Padding="16,14" Margin="0,0,6,0">
+                        <StackPanel>
+                            <TextBlock Text="Total Tracked This Week" FontSize="11" Foreground="#888888"/>
+                            <TextBlock x:Name="CardTotalHoursText" Text="0.0 hrs" FontSize="24" FontWeight="Bold" Foreground="#4CC2FF" Margin="0,4,0,0"/>
+                            <TextBlock x:Name="CardTotalBlocksText" Text="0 check-in blocks" FontSize="11" Foreground="#666666" Margin="0,2,0,0"/>
+                        </StackPanel>
+                    </ui:Card>
+
+                    <!-- Metric 2: 7.5h Target Days -->
+                    <ui:Card Grid.Column="1" Padding="16,14" Margin="3,0,3,0">
+                        <StackPanel>
+                            <TextBlock Text="7.5h Target Days Met" FontSize="11" Foreground="#888888"/>
+                            <TextBlock x:Name="CardTargetDaysText" Text="0 of 5 days" FontSize="24" FontWeight="Bold" Foreground="#57D9A3" Margin="0,4,0,0"/>
+                            <TextBlock x:Name="CardTargetDaysPctText" Text="0% target completion" FontSize="11" Foreground="#666666" Margin="0,2,0,0"/>
+                        </StackPanel>
+                    </ui:Card>
+
+                    <!-- Metric 3: Dominant Activity -->
+                    <ui:Card Grid.Column="2" Padding="16,14" Margin="3,0,3,0">
+                        <StackPanel>
+                            <TextBlock Text="Dominant Activity" FontSize="11" Foreground="#888888"/>
+                            <TextBlock x:Name="CardTopCategoryText" Text="None" FontSize="18" FontWeight="Bold" Foreground="#B99BFF" Margin="0,6,0,0" TextTrimming="CharacterEllipsis"/>
+                            <TextBlock x:Name="CardTopCategoryHoursText" Text="0 hrs logged" FontSize="11" Foreground="#666666" Margin="0,2,0,0"/>
+                        </StackPanel>
+                    </ui:Card>
+
+                    <!-- Metric 4: Dev vs Support -->
+                    <ui:Card Grid.Column="3" Padding="16,14" Margin="6,0,0,0">
+                        <StackPanel>
+                            <TextBlock Text="Support &amp; Triage Ratio" FontSize="11" Foreground="#888888"/>
+                            <TextBlock x:Name="CardSupportRatioText" Text="0.0 hrs (0%)" FontSize="22" FontWeight="Bold" Foreground="#FF9800" Margin="0,4,0,0"/>
+                            <TextBlock Text="Production support &amp; triage" FontSize="11" Foreground="#666666" Margin="0,2,0,0"/>
+                        </StackPanel>
+                    </ui:Card>
+                </Grid>
+
+                <!-- Main Content Split (Category Breakdown + Activity Log) -->
+                <Grid Grid.Row="2">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="4*" />
+                        <ColumnDefinition Width="6*" />
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Category Breakdown -->
+                    <ui:Card Grid.Column="0" Padding="16" Margin="0,0,8,0">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="*" />
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Grid.Row="0" Text="Time by Category" FontWeight="SemiBold" FontSize="14" Foreground="#FFFFFF" Margin="0,0,0,12"/>
+
+                            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                                <StackPanel>
+                                    <TextBlock x:Name="EmptyCategoriesNotice" Text="No category data recorded this week yet." 
+                                               Foreground="#777777" FontStyle="Italic" Visibility="Collapsed" Margin="0,20,0,0" HorizontalAlignment="Center"/>
+
+                                    <ItemsControl x:Name="CategoryBreakdownItems">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border Margin="0,0,0,10" Background="#1A1A1A" CornerRadius="6" Padding="12,10">
+                                                    <Grid>
+                                                        <Grid.RowDefinitions>
+                                                            <RowDefinition Height="Auto" />
+                                                            <RowDefinition Height="Auto" />
+                                                        </Grid.RowDefinitions>
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="*" />
+                                                            <ColumnDefinition Width="Auto" />
+                                                        </Grid.ColumnDefinitions>
+
+                                                        <StackPanel Grid.Row="0" Grid.Column="0">
+                                                            <TextBlock Text="{Binding Category}" FontWeight="SemiBold" FontSize="13" Foreground="#FFFFFF"/>
+                                                            <TextBlock Text="{Binding FormattedCount}" FontSize="11" Foreground="#888888"/>
+                                                        </StackPanel>
+
+                                                        <StackPanel Grid.Row="0" Grid.Column="1" HorizontalAlignment="Right">
+                                                            <TextBlock Text="{Binding FormattedDuration}" FontWeight="Bold" FontSize="13" HorizontalAlignment="Right" Foreground="#FFFFFF"/>
+                                                            <TextBlock Text="{Binding PercentageDisplay}" FontSize="11" Foreground="#888888" HorizontalAlignment="Right"/>
+                                                        </StackPanel>
+
+                                                        <!-- Category Progress Bar -->
+                                                        <ProgressBar Grid.Row="1" Grid.ColumnSpan="2" Height="5" Margin="0,8,0,2"
+                                                                     Value="{Binding Percentage}" Maximum="100" 
+                                                                     Foreground="{Binding ColorHex}" Background="#2B2B2B"/>
+                                                    </Grid>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </StackPanel>
+                            </ScrollViewer>
+                        </Grid>
+                    </ui:Card>
+
+                    <!-- Activity Log (Chronological) -->
+                    <ui:Card Grid.Column="1" Padding="16" Margin="8,0,0,0">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="*" />
+                            </Grid.RowDefinitions>
+
+                            <Grid Grid.Row="0" Margin="0,0,0,12">
+                                <TextBlock Text="Work Week Log Entries" FontWeight="SemiBold" FontSize="14" Foreground="#FFFFFF" VerticalAlignment="Center"/>
+                                <TextBlock x:Name="LogsCountText" Text="0 entries" FontSize="12" Foreground="#888888" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                            </Grid>
+
+                            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                                <StackPanel>
+                                    <TextBlock x:Name="EmptyLogsNotice" Text="No entries yet this week. Click 'Check-in Now' or let the 30-min timer prompt you." 
+                                               Foreground="#777777" FontStyle="Italic" Visibility="Collapsed" Margin="0,40,0,0" HorizontalAlignment="Center" TextAlignment="Center"/>
+
+                                    <ItemsControl x:Name="ActivityLogItems">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border Background="#1A1A1A" CornerRadius="6" Padding="12,10" Margin="0,0,0,8" BorderBrush="#262626" BorderThickness="1">
+                                                    <Grid>
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="*" />
+                                                            <ColumnDefinition Width="Auto" />
+                                                        </Grid.ColumnDefinitions>
+
+                                                        <StackPanel Grid.Column="0">
+                                                            <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                                                <Border Background="#263545" CornerRadius="4" Padding="6,2" Margin="0,0,8,0">
+                                                                    <TextBlock Text="{Binding Category}" FontSize="11" FontWeight="SemiBold" Foreground="#4CC2FF"/>
+                                                                </Border>
+                                                                <TextBlock Text="{Binding FormattedTime}" FontSize="11" Foreground="#888888" VerticalAlignment="Center"/>
+                                                                <TextBlock Text=" • " FontSize="11" Foreground="#555555" VerticalAlignment="Center"/>
+                                                                <TextBlock Text="{Binding DurationDisplay}" FontSize="11" Foreground="#AAAAAA" VerticalAlignment="Center"/>
+                                                            </StackPanel>
+
+                                                            <TextBlock Text="{Binding Description}" FontSize="13" Foreground="#DDDDDD" TextWrapping="Wrap" Margin="0,2,0,0"
+                                                                       Visibility="{Binding Description, Converter={x:Static local:MainWindow.StringToVisibilityConverter}}"/>
+                                                        </StackPanel>
+
+                                                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="8,0,0,0">
+                                                            <ui:Button Appearance="Secondary" Padding="8,6" Margin="0,0,4,0"
+                                                                       Click="OnEditLogEntryClick" Tag="{Binding}" 
+                                                                       ToolTip="Edit this entry">
+                                                                <ui:Button.Icon>
+                                                                    <ui:SymbolIcon Symbol="Edit24" Foreground="#4CC2FF" FontSize="15"/>
+                                                                </ui:Button.Icon>
+                                                            </ui:Button>
+
+                                                            <ui:Button Appearance="Secondary" Padding="8,6" 
+                                                                       Click="OnDeleteLogClick" Tag="{Binding Id}" 
+                                                                       ToolTip="Delete this entry">
+                                                                <ui:Button.Icon>
+                                                                    <ui:SymbolIcon Symbol="Delete24" Foreground="#FF6B68" FontSize="15"/>
+                                                                </ui:Button.Icon>
+                                                            </ui:Button>
+                                                        </StackPanel>
+                                                    </Grid>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </StackPanel>
+                            </ScrollViewer>
+                        </Grid>
+                    </ui:Card>
+
+                </Grid>
+            </Grid>
+
+            <!-- ================= VIEW 3: CALENDAR & DAY EDITOR ================= -->
+            <Grid x:Name="CalendarView" Visibility="Collapsed">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="5.2*" />
+                    <ColumnDefinition Width="4.8*" />
+                </Grid.ColumnDefinitions>
+
+                <!-- Left Column: Month Calendar -->
+                <ui:Card Grid.Column="0" Padding="16,14" Margin="0,0,8,0">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <!-- Month Nav Header -->
+                        <Grid Grid.Row="0" Margin="0,0,0,12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Grid.Column="0" Orientation="Horizontal">
+                                <ui:Button Appearance="Secondary" Click="OnPrevMonthClick" Padding="8,5" ToolTip="Previous Month">
+                                    <ui:Button.Icon>
+                                        <ui:SymbolIcon Symbol="ChevronLeft24" />
+                                    </ui:Button.Icon>
+                                </ui:Button>
+                                <ui:Button Appearance="Secondary" Click="OnNextMonthClick" Padding="8,5" Margin="4,0,0,0" ToolTip="Next Month">
+                                    <ui:Button.Icon>
+                                        <ui:SymbolIcon Symbol="ChevronRight24" />
+                                    </ui:Button.Icon>
+                                </ui:Button>
+                                <ui:Button Content="Today" Appearance="Secondary" Click="OnTodayCalendarClick" Padding="10,5" Margin="6,0,0,0" />
+                            </StackPanel>
+
+                            <TextBlock Grid.Column="1" x:Name="CalendarMonthTitle" Text="September 2026" 
+                                       FontSize="17" FontWeight="Bold" Foreground="#FFFFFF" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+
+                            <ui:Button Grid.Column="2" Content="Export Week (.xlsx)" Appearance="Secondary" Click="OnExportWeekToExcelClick" Padding="10,5">
+                                <ui:Button.Icon>
+                                    <ui:SymbolIcon Symbol="DocumentTable24" Foreground="#107C41" />
+                                </ui:Button.Icon>
+                            </ui:Button>
+                        </Grid>
+
+                        <!-- Days of Week Header (Mon-Sun) -->
+                        <UniformGrid Grid.Row="1" Columns="7" Margin="0,0,0,8">
+                            <TextBlock Text="MON" FontWeight="Bold" FontSize="11" Foreground="#888888" HorizontalAlignment="Center"/>
+                            <TextBlock Text="TUE" FontWeight="Bold" FontSize="11" Foreground="#888888" HorizontalAlignment="Center"/>
+                            <TextBlock Text="WED" FontWeight="Bold" FontSize="11" Foreground="#888888" HorizontalAlignment="Center"/>
+                            <TextBlock Text="THU" FontWeight="Bold" FontSize="11" Foreground="#888888" HorizontalAlignment="Center"/>
+                            <TextBlock Text="FRI" FontWeight="Bold" FontSize="11" Foreground="#888888" HorizontalAlignment="Center"/>
+                            <TextBlock Text="SAT" FontWeight="Bold" FontSize="11" Foreground="#555555" HorizontalAlignment="Center"/>
+                            <TextBlock Text="SUN" FontWeight="Bold" FontSize="11" Foreground="#555555" HorizontalAlignment="Center"/>
+                        </UniformGrid>
+
+                        <!-- Calendar Days Grid -->
+                        <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
+                            <ItemsControl x:Name="CalendarDaysItems">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <UniformGrid Columns="7" />
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Margin="2" CornerRadius="6" Padding="6,8" Cursor="Hand" MouseLeftButtonDown="OnCalendarDaySelected" Tag="{Binding Date}"
+                                                BorderThickness="{Binding IsSelected, Converter={x:Static local:MainWindow.SelectedBorderThicknessConverter}}"
+                                                BorderBrush="{Binding IsSelected, Converter={x:Static local:MainWindow.SelectedBorderBrushConverter}}"
+                                                Background="{Binding IsCurrentMonth, Converter={x:Static local:MainWindow.CurrentMonthBackgroundConverter}}">
+                                            <Grid>
+                                                <Grid.RowDefinitions>
+                                                    <RowDefinition Height="Auto" />
+                                                    <RowDefinition Height="Auto" />
+                                                </Grid.RowDefinitions>
+
+                                                <!-- Day Number & Today indicator -->
+                                                <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Center">
+                                                    <TextBlock Text="{Binding DayNumber}" FontWeight="SemiBold" FontSize="13"
+                                                               Foreground="{Binding IsCurrentMonth, Converter={x:Static local:MainWindow.CurrentMonthForegroundConverter}}"/>
+                                                    <Ellipse Width="5" Height="5" Fill="#4CC2FF" Margin="4,0,0,0" VerticalAlignment="Center"
+                                                             Visibility="{Binding IsToday, Converter={x:Static local:MainWindow.BooleanToVisibilityConverter}}"/>
+                                                </StackPanel>
+
+                                                <!-- 7.5h Target Badge / Tick Mark -->
+                                                <Border Grid.Row="1" CornerRadius="10" Margin="0,6,0,0" Padding="4,2" HorizontalAlignment="Center"
+                                                        Background="{Binding BadgeBackgroundHex}">
+                                                    <TextBlock Text="{Binding StatusBadgeText}" FontSize="10" FontWeight="Bold"
+                                                               Foreground="{Binding BadgeForegroundHex}" HorizontalAlignment="Center"/>
+                                                </Border>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+
+                        <!-- Legend -->
+                        <Border Grid.Row="3" Background="#181818" CornerRadius="6" Padding="10,6" Margin="0,8,0,0">
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                <Border Background="#107C41" CornerRadius="8" Padding="6,2" Margin="0,0,8,0">
+                                    <TextBlock Text="✓ 7.5h Logged" FontSize="10" FontWeight="Bold" Foreground="#E6FFED"/>
+                                </Border>
+                                <TextBlock Text="Target Met" FontSize="11" Foreground="#888888" VerticalAlignment="Center" Margin="0,0,16,0"/>
+
+                                <Border Background="#8A5700" CornerRadius="8" Padding="6,2" Margin="0,0,8,0">
+                                    <TextBlock Text="X.Xh / 7.5h" FontSize="10" FontWeight="Bold" Foreground="#FFE2B3"/>
+                                </Border>
+                                <TextBlock Text="Partial" FontSize="11" Foreground="#888888" VerticalAlignment="Center" Margin="0,0,16,0"/>
+
+                                <Ellipse Width="6" Height="6" Fill="#4CC2FF" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                <TextBlock Text="Today" FontSize="11" Foreground="#888888" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Border>
+
+                    </Grid>
+                </ui:Card>
+
+                <!-- Right Column: Day Editor Panel -->
+                <ui:Card Grid.Column="1" Padding="16,14" Margin="8,0,0,0">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+
+                        <!-- Selected Day Header -->
+                        <Grid Grid.Row="0" Margin="0,0,0,12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel>
+                                <TextBlock Text="DAILY TIME LOG EDITOR" FontSize="11" FontWeight="Bold" Foreground="#888888" />
+                                <TextBlock x:Name="DayEditorTitleText" Text="Monday, Sep 21, 2026" FontSize="18" FontWeight="Bold" Foreground="#FFFFFF" Margin="0,2,0,0"/>
+                            </StackPanel>
+
+                            <ui:Button Grid.Column="1" Content="+ Add 30m Block" Appearance="Primary" Click="OnAddBlockForDayClick" Padding="12,6" VerticalAlignment="Center">
+                                <ui:Button.Icon>
+                                    <ui:SymbolIcon Symbol="Add24" />
+                                </ui:Button.Icon>
+                            </ui:Button>
+                        </Grid>
+
+                        <!-- Daily Target Status Card (7.5h) -->
+                        <Border Grid.Row="1" x:Name="DayTargetCardBorder" Background="#1C2E20" BorderBrush="#2D5A34" BorderThickness="1" CornerRadius="8" Padding="14,10" Margin="0,0,0,14">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+
+                                <StackPanel Grid.Row="0" Grid.Column="0">
+                                    <TextBlock x:Name="DayTargetStatusText" Text="✓ 7.5-Hour Target Achieved!" FontWeight="Bold" FontSize="13" Foreground="#57D9A3"/>
+                                    <TextBlock x:Name="DayTargetSubtext" Text="Total Logged: 7.5h (15 blocks)" FontSize="11" Foreground="#A2E8C5" Margin="0,2,0,0"/>
+                                </StackPanel>
+
+                                <TextBlock Grid.Row="0" Grid.Column="1" x:Name="DayTargetPctText" Text="100%" FontWeight="Bold" FontSize="16" Foreground="#57D9A3" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+
+                                <ProgressBar Grid.Row="1" Grid.ColumnSpan="2" x:Name="DayTargetProgressBar" Height="6" Margin="0,8,0,0" Value="100" Maximum="100" Foreground="#107C41" Background="#263D2B"/>
+                            </Grid>
+                        </Border>
+
+                        <!-- Logs List for Day -->
+                        <Grid Grid.Row="2">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="*" />
+                            </Grid.RowDefinitions>
+
+                            <Grid Grid.Row="0" Margin="0,0,0,8">
+                                <TextBlock Text="Time Blocks for this Day" FontWeight="SemiBold" FontSize="13" Foreground="#FFFFFF" VerticalAlignment="Center"/>
+                                <TextBlock x:Name="DayBlocksCountText" Text="0 blocks" FontSize="12" Foreground="#888888" HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                            </Grid>
+
+                            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                                <StackPanel>
+                                    <TextBlock x:Name="EmptyDayLogsNotice" Text="No entries recorded for this day. Click '+ Add 30m Block' above to backfill or add work logs." 
+                                               Foreground="#777777" FontStyle="Italic" Visibility="Collapsed" Margin="0,40,0,0" HorizontalAlignment="Center" TextAlignment="Center"/>
+
+                                    <ItemsControl x:Name="DayLogsItems">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border Background="#1A1A1A" CornerRadius="6" Padding="12,10" Margin="0,0,0,8" BorderBrush="#282828" BorderThickness="1">
+                                                    <Grid>
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="*" />
+                                                            <ColumnDefinition Width="Auto" />
+                                                        </Grid.ColumnDefinitions>
+
+                                                        <StackPanel Grid.Column="0">
+                                                            <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                                                <Border Background="#263545" CornerRadius="4" Padding="6,2" Margin="0,0,8,0">
+                                                                    <TextBlock Text="{Binding Category}" FontSize="11" FontWeight="SemiBold" Foreground="#4CC2FF"/>
+                                                                </Border>
+                                                                <TextBlock Text="{Binding TimeOfDayDisplay}" FontSize="11" FontWeight="Bold" Foreground="#FFFFFF" VerticalAlignment="Center"/>
+                                                                <TextBlock Text=" • " FontSize="11" Foreground="#555555" VerticalAlignment="Center"/>
+                                                                <TextBlock Text="{Binding DurationDisplay}" FontSize="11" Foreground="#AAAAAA" VerticalAlignment="Center"/>
+                                                            </StackPanel>
+
+                                                            <TextBlock Text="{Binding Description}" FontSize="12" Foreground="#DDDDDD" TextWrapping="Wrap" Margin="0,2,0,0"
+                                                                       Visibility="{Binding Description, Converter={x:Static local:MainWindow.StringToVisibilityConverter}}"/>
+                                                        </StackPanel>
+
+                                                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="8,0,0,0">
+                                                            <ui:Button Appearance="Secondary" Padding="8,5" Margin="0,0,4,0"
+                                                                       Click="OnEditLogEntryClick" Tag="{Binding}" 
+                                                                       ToolTip="Edit this block">
+                                                                <ui:Button.Icon>
+                                                                    <ui:SymbolIcon Symbol="Edit24" Foreground="#4CC2FF" FontSize="14"/>
+                                                                </ui:Button.Icon>
+                                                            </ui:Button>
+
+                                                            <ui:Button Appearance="Secondary" Padding="8,5" 
+                                                                       Click="OnDeleteLogClick" Tag="{Binding Id}" 
+                                                                       ToolTip="Delete this block">
+                                                                <ui:Button.Icon>
+                                                                    <ui:SymbolIcon Symbol="Delete24" Foreground="#FF6B68" FontSize="14"/>
+                                                                </ui:Button.Icon>
+                                                            </ui:Button>
+                                                        </StackPanel>
+                                                    </Grid>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </StackPanel>
+                            </ScrollViewer>
+                        </Grid>
+
+                    </Grid>
+                </ui:Card>
+            </Grid>
+
+        </Grid>
+    </Grid>
+</ui:FluentWindow>
