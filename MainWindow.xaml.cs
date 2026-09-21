@@ -30,11 +30,13 @@ namespace WorkTimeTracker
 
         private DateTime _calendarCurrentMonth = new(DateTime.Today.Year, DateTime.Today.Month, 1);
         private DateTime _selectedDate = DateTime.Today;
-        private double _previousWidth = 1060;
+        private double _previousWidth = 1360;
         private double _previousHeight = 740;
         private bool _isMiniMode = false;
         public const double DefaultPinnedWidth = 246;
         public const double DefaultPinnedHeight = 66;
+        public const double DefaultBigWidth = 1360;
+        public const double DefaultBigHeight = 740;
 
         public MainWindow()
         {
@@ -416,10 +418,10 @@ namespace WorkTimeTracker
             MiniModeBorder.Visibility = Visibility.Collapsed;
             FullModeGrid.Visibility = Visibility.Visible;
 
-            MinWidth = 940;
+            MinWidth = 1000;
             MinHeight = 660;
-            Width = Math.Max(_previousWidth, 980);
-            Height = Math.Max(_previousHeight, 680);
+            Width = Math.Max(_previousWidth, DefaultBigWidth);
+            Height = Math.Max(_previousHeight, DefaultBigHeight);
             Topmost = false;
 
             CenterOnScreen();
