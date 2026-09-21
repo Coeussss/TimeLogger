@@ -3,24 +3,32 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Work Time Tracker</title>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220%22><text y=%2226%22 font-size=%2226%22>⏱️</text></svg>">
+  <title>Work Time Tracker • Dev & Support</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⏱️</text></svg>">
   <style>
     :root {
       --bg-dark: #121212;
-      --card-bg: #1e1e1e;
-      --card-border: #2e2e2e;
-      --primary: #0078d4;
-      --primary-hover: #1086e0;
-      --accent-green: #107c41;
-      --accent-green-text: #57d9a3;
-      --accent-orange: #ffa834;
-      --accent-red: #ea4335;
-      --text-main: #f5f5f5;
+      --card-bg: #1A1A1A;
+      --card-border: #2A2A2A;
+      --card-inner: #222222;
+      --primary: #0078D4;
+      --primary-hover: #1086E0;
+      --accent-green: #107C41;
+      --accent-green-text: #57D9A3;
+      --accent-green-bg: #1C2E20;
+      --accent-green-border: #2D5A34;
+      --accent-amber: #FF8C00;
+      --accent-amber-text: #FFAA44;
+      --accent-amber-bg: #2E2514;
+      --accent-amber-border: #5A4826;
+      --accent-blue: #4CC2FF;
+      --accent-purple: #B99BFF;
+      --accent-red: #FF6B68;
+      --text-main: #FFFFFF;
       --text-muted: #888888;
       --text-dim: #555555;
-      --font-mono: 'Cascadia Code', 'Fira Code', 'Courier New', monospace;
-      --font-ui: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      --font-mono: 'Consolas', 'Cascadia Code', 'Fira Code', monospace;
+      --font-ui: 'Segoe UI Variable Display', 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif;
     }
 
     * {
@@ -37,395 +45,907 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 16px;
+      padding: 0;
+      overflow-x: hidden;
     }
 
-    .container {
+    .app-wrapper {
       width: 100%;
-      max-width: 680px;
+      max-width: 1360px;
+      min-height: 100vh;
       display: flex;
       flex-direction: column;
-      gap: 16px;
     }
 
-    /* Header Bar */
-    header {
+    /* Top Title Bar */
+    .window-titlebar {
       display: flex;
-      justify-content: space-between;
       align-items: center;
-      padding: 8px 0;
+      justify-content: space-between;
+      height: 32px;
+      padding: 0 16px;
+      background: #121212;
+      border-bottom: 1px solid #1E1E1E;
+      font-size: 11px;
+      color: var(--text-muted);
+      user-select: none;
     }
 
-    .brand {
+    /* Top Navigation Bar */
+    .top-nav-bar {
+      background: #1A1A1A;
+      border-bottom: 1px solid #2A2A2A;
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .brand-section {
       display: flex;
       align-items: center;
       gap: 12px;
+      cursor: pointer;
     }
 
     .brand-icon {
-      width: 40px;
-      height: 40px;
+      width: 34px;
+      height: 34px;
       background: var(--primary);
-      border-radius: 8px;
+      border-radius: 7px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 20px;
-      box-shadow: 0 4px 12px rgba(0, 120, 212, 0.3);
+      font-size: 18px;
+      box-shadow: 0 2px 8px rgba(0, 120, 212, 0.35);
     }
 
-    .brand-info h1 {
-      font-size: 17px;
+    .brand-text h1 {
+      font-size: 14px;
       font-weight: 700;
-      letter-spacing: -0.2px;
+      color: #FFFFFF;
+      line-height: 1.2;
     }
 
-    .brand-info p {
+    .brand-text p {
       font-size: 11px;
       color: var(--text-muted);
     }
 
-    .header-actions {
+    /* Navigation Tabs Container */
+    .nav-tabs-pill {
+      background: #242424;
+      border-radius: 8px;
+      padding: 3px;
+      display: flex;
+      gap: 3px;
+    }
+
+    .nav-tab-btn {
+      background: transparent;
+      border: 1px solid transparent;
+      color: #AAAAAA;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 7px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+      font-family: inherit;
+    }
+
+    .nav-tab-btn:hover {
+      color: #FFFFFF;
+      background: #2D2D2D;
+    }
+
+    .nav-tab-btn.active {
+      background: #333333;
+      color: #FFFFFF;
+      border-color: rgba(255, 255, 255, 0.08);
+      box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+    }
+
+    /* Action Buttons & Mini Timer */
+    .nav-actions {
       display: flex;
       align-items: center;
       gap: 8px;
     }
 
+    .mini-timer-pill {
+      background: #202020;
+      border: 1px solid #333333;
+      border-radius: 6px;
+      padding: 6px 10px;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 700;
+      color: #FFFFFF;
+    }
+
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--accent-blue);
+      box-shadow: 0 0 6px var(--accent-blue);
+      transition: background 0.2s ease;
+    }
+
+    .status-dot.paused {
+      background: var(--accent-amber-text);
+      box-shadow: 0 0 6px var(--accent-amber-text);
+    }
+
+    /* Buttons */
     .btn {
       display: inline-flex;
       align-items: center;
       justify-content: center;
       gap: 6px;
-      padding: 7px 14px;
+      padding: 6px 13px;
       font-size: 12px;
       font-weight: 600;
-      border-radius: 8px;
-      border: 1px solid transparent;
+      border-radius: 6px;
+      border: 1px solid #333333;
       cursor: pointer;
       transition: all 0.15s ease;
-      background: #252525;
-      color: var(--text-main);
+      background: #222222;
+      color: #FFFFFF;
       text-decoration: none;
+      font-family: inherit;
+      white-space: nowrap;
     }
 
     .btn:hover {
-      background: #323232;
+      background: #2B2B2B;
+      border-color: #444444;
     }
 
     .btn-primary {
       background: var(--primary);
+      border-color: var(--primary);
       color: white;
     }
 
     .btn-primary:hover {
       background: var(--primary-hover);
+      border-color: var(--primary-hover);
     }
 
-    .btn-green {
+    .btn-excel {
       background: #173121;
-      border-color: var(--accent-green);
+      border-color: #1F5C37;
       color: var(--accent-green-text);
     }
 
-    .btn-green:hover {
-      background: #1e3f2b;
+    .btn-excel:hover {
+      background: #1F3F2B;
+      border-color: #277345;
+    }
+
+    .btn-icon-only {
+      padding: 6px 8px;
+    }
+
+    /* Main Workspace Views */
+    main {
+      flex: 1;
+      padding: 20px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .view-container {
+      display: none;
+      flex-direction: column;
+      gap: 16px;
+      animation: fadeIn 0.2s ease-in-out;
+    }
+
+    .view-container.active {
+      display: flex;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(3px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
     /* Cards */
     .card {
       background: var(--card-bg);
       border: 1px solid var(--card-border);
-      border-radius: 12px;
-      padding: 18px;
-      box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+      border-radius: 8px;
+      padding: 16px 18px;
     }
 
-    /* Timer Card */
-    .timer-card {
-      text-align: center;
+    /* ======================================================== */
+    /* VIEW 1: TRACKER & TIMER VIEW                             */
+    /* ======================================================== */
+    .countdown-card {
       display: flex;
       flex-direction: column;
-      align-items: center;
-      gap: 12px;
+      gap: 14px;
+      padding: 18px 20px;
     }
 
-    .timer-status-row {
-      width: 100%;
+    .countdown-top-row {
       display: flex;
-      justify-content: space-between;
       align-items: center;
-      font-size: 11px;
-      font-weight: 700;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 14px;
+    }
+
+    .countdown-left {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-wrap: wrap;
     }
 
     .status-badge {
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      color: #4cc2ff;
-    }
-
-    .status-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: #4cc2ff;
-      box-shadow: 0 0 8px #4cc2ff;
-    }
-
-    .status-badge.paused .status-dot {
-      background: var(--accent-orange);
-      box-shadow: 0 0 8px var(--accent-orange);
+      padding: 4px 10px;
+      border-radius: 12px;
+      background: #1B3A57;
+      color: var(--accent-blue);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
     }
 
     .status-badge.paused {
-      color: var(--accent-orange);
+      background: #3A2A1A;
+      color: var(--accent-amber-text);
     }
 
-    .timer-display {
+    .countdown-display-large {
       font-family: var(--font-mono);
-      font-size: 58px;
+      font-size: 26px;
       font-weight: 700;
-      letter-spacing: 2px;
-      color: white;
-      margin: 4px 0;
-      text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+      color: #FFFFFF;
+      letter-spacing: 1px;
     }
 
-    .progress-bar-bg {
+    .countdown-subtext {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .countdown-controls {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Slim Cycle Progress Bar */
+    .slim-progress-bar {
       width: 100%;
-      height: 5px;
-      background: #282828;
-      border-radius: 4px;
+      height: 4px;
+      background: #262626;
+      border-radius: 2px;
       overflow: hidden;
     }
 
-    .progress-bar-fill {
+    .slim-progress-fill {
       height: 100%;
       background: var(--primary);
       width: 0%;
       transition: width 0.3s ease;
     }
 
-    .timer-controls {
-      display: flex;
-      gap: 8px;
-      width: 100%;
-      margin-top: 4px;
+    /* 2-Column Info Row */
+    .tracker-info-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
     }
 
-    .timer-controls .btn {
-      flex: 1;
-      padding: 10px;
-      font-size: 13px;
-    }
-
-    /* Target Goal Card */
-    .target-card {
+    .info-card-content {
       display: flex;
       align-items: center;
-      gap: 14px;
-      background: #231b10;
-      border-color: #4a381c;
-      transition: all 0.3s ease;
+      justify-content: space-between;
     }
 
-    .target-card.met {
-      background: #142e1e;
-      border-color: #1f5c37;
+    .info-card-text h3 {
+      font-size: 13px;
+      font-weight: 600;
+      color: #FFFFFF;
     }
 
-    .target-icon-box {
-      width: 44px;
-      height: 44px;
-      border-radius: 50%;
+    .info-card-text p {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .interval-select {
+      background: #242424;
+      border: 1px solid #3A3A3A;
+      border-radius: 6px;
+      color: #FFFFFF;
+      padding: 7px 12px;
+      font-size: 12px;
+      font-family: inherit;
+      cursor: pointer;
+      outline: none;
+    }
+
+    .interval-select:focus {
+      border-color: var(--primary);
+    }
+
+    /* Target badge circle */
+    .target-circle-badge {
+      width: 36px;
+      height: 36px;
+      border-radius: 18px;
+      background: #243324;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 20px;
-      background: #382a14;
-      flex-shrink: 0;
-    }
-
-    .target-card.met .target-icon-box {
-      background: #107c41;
+      font-size: 16px;
+      font-weight: bold;
       color: var(--accent-green-text);
+      flex-shrink: 0;
+      margin-right: 12px;
     }
 
-    .target-info {
+    .target-circle-badge.not-met {
+      background: #333333;
+      color: #AAAAAA;
+    }
+
+    /* Dev & Support Reference Chips */
+    .categories-banner {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .banner-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    .banner-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .category-chip-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid #2C2C2C;
+      background: #1F1F1F;
+      transition: all 0.15s ease;
+      user-select: none;
+    }
+
+    .category-chip-btn:hover {
+      transform: translateY(-1px);
+      filter: brightness(1.15);
+    }
+
+    /* ======================================================== */
+    /* VIEW 2: WEEKLY DASHBOARD VIEW                            */
+    /* ======================================================== */
+    .dashboard-header-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .week-nav-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .week-title-block h2 {
+      font-size: 20px;
+      font-weight: 700;
+      color: #FFFFFF;
+      margin-top: 2px;
+    }
+
+    .week-title-block p {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-muted);
+      letter-spacing: 0.5px;
+    }
+
+    /* Top 4 KPI Cards */
+    .kpi-metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+
+    .kpi-card {
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .kpi-label {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .kpi-value {
+      font-size: 24px;
+      font-weight: 700;
+      margin-top: 2px;
+      line-height: 1.1;
+    }
+
+    .kpi-subtext {
+      font-size: 11px;
+      color: #666666;
+      margin-top: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Main 2-Column Split: Category Breakdown (40%) + Activity Log (60%) */
+    .dashboard-split-grid {
+      display: grid;
+      grid-template-columns: 4fr 6fr;
+      gap: 16px;
+      min-height: 480px;
+    }
+
+    .split-pane-card {
+      display: flex;
+      flex-direction: column;
+      padding: 16px;
+      overflow: hidden;
+    }
+
+    .split-pane-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #262626;
+    }
+
+    .split-pane-header h3 {
+      font-size: 14px;
+      font-weight: 600;
+      color: #FFFFFF;
+    }
+
+    .split-pane-header span {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .scrollable-list {
+      flex: 1;
+      overflow-y: auto;
+      max-height: 520px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding-right: 4px;
+    }
+
+    .scrollable-list::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .scrollable-list::-webkit-scrollbar-thumb {
+      background: #333333;
+      border-radius: 3px;
+    }
+
+    /* Category Breakdown Item Card */
+    .category-breakdown-row {
+      background: #1C1C1C;
+      border: 1px solid #262626;
+      border-radius: 6px;
+      padding: 10px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .cat-row-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .cat-row-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: #FFFFFF;
+    }
+
+    .cat-row-blocks {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 1px;
+    }
+
+    .cat-row-right {
+      text-align: right;
+    }
+
+    .cat-row-duration {
+      font-size: 13px;
+      font-weight: 700;
+      color: #FFFFFF;
+    }
+
+    .cat-row-pct {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .cat-progress-bg {
+      width: 100%;
+      height: 5px;
+      background: #2B2B2B;
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .cat-progress-fill {
+      height: 100%;
+      border-radius: 3px;
+    }
+
+    /* Activity Log Item Card */
+    .activity-log-item {
+      background: #1A1A1A;
+      border: 1px solid #262626;
+      border-radius: 6px;
+      padding: 10px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      transition: background 0.15s ease;
+    }
+
+    .activity-log-item:hover {
+      background: #202020;
+    }
+
+    .log-item-details {
       flex: 1;
       display: flex;
       flex-direction: column;
       gap: 4px;
     }
 
-    .target-title {
-      font-size: 13px;
-      font-weight: 700;
-      color: var(--accent-orange);
-    }
-
-    .target-card.met .target-title {
-      color: var(--accent-green-text);
-    }
-
-    .target-details {
+    .log-item-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
       font-size: 11px;
-      color: #cccccc;
     }
 
-    .target-progress-fill {
-      background: var(--accent-orange);
+    .cat-badge-pill {
+      background: #263545;
+      color: var(--accent-blue);
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      display: inline-block;
     }
 
-    .target-card.met .target-progress-fill {
-      background: var(--accent-green-text);
+    .log-time-text {
+      color: var(--text-muted);
     }
 
-    /* Category Shortcuts */
-    .section-title {
+    .log-dur-text {
+      color: #AAAAAA;
+      font-weight: 600;
+    }
+
+    .log-desc-text {
+      font-size: 13px;
+      color: #DDDDDD;
+      word-break: break-word;
+      line-height: 1.3;
+    }
+
+    .log-item-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .empty-notice {
+      color: #777777;
+      font-style: italic;
+      font-size: 12px;
+      text-align: center;
+      padding: 36px 16px;
+    }
+
+    /* ======================================================== */
+    /* VIEW 3: CALENDAR & DAY EDITOR VIEW                       */
+    /* ======================================================== */
+    .calendar-split-grid {
+      display: grid;
+      grid-template-columns: 5.2fr 4.8fr;
+      gap: 16px;
+      min-height: 520px;
+    }
+
+    /* Calendar Left Side */
+    .calendar-card {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      padding: 16px;
+    }
+
+    .calendar-month-nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .calendar-month-title {
+      font-size: 17px;
+      font-weight: 700;
+      color: #FFFFFF;
+    }
+
+    .calendar-weekdays-row {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      text-align: center;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-muted);
+      padding: 4px 0;
+    }
+
+    .calendar-weekdays-row span:nth-child(n+6) {
+      color: var(--text-dim);
+    }
+
+    .calendar-days-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+    }
+
+    .cal-day-cell {
+      background: #1C1C1C;
+      border: 1px solid #282828;
+      border-radius: 6px;
+      padding: 6px 4px;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      min-height: 60px;
+      transition: all 0.15s ease;
+      position: relative;
+    }
+
+    .cal-day-cell:hover {
+      background: #242424;
+      border-color: #383838;
+    }
+
+    .cal-day-cell.other-month {
+      opacity: 0.35;
+      background: #161616;
+    }
+
+    .cal-day-cell.selected {
+      border: 2px solid var(--primary) !important;
+      background: #202730 !important;
+    }
+
+    .cal-day-top {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .today-indicator-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--accent-blue);
+    }
+
+    .cal-target-badge {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 10px;
+      white-space: nowrap;
+      text-align: center;
+    }
+
+    .cal-target-badge.met {
+      background: #107C41;
+      color: #E6FFED;
+    }
+
+    .cal-target-badge.partial {
+      background: #8A5700;
+      color: #FFE2B3;
+    }
+
+    .cal-target-badge.zero {
+      background: #222222;
+      color: #777777;
+    }
+
+    /* Calendar Legend */
+    .calendar-legend {
+      background: #181818;
+      border-radius: 6px;
+      padding: 8px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    /* Day Editor Right Side */
+    .day-editor-card {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      padding: 16px;
+    }
+
+    .day-editor-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .day-editor-header h2 {
+      font-size: 18px;
+      font-weight: 700;
+      color: #FFFFFF;
+      margin-top: 1px;
+    }
+
+    .day-editor-header p {
       font-size: 11px;
       font-weight: 700;
       color: var(--text-muted);
       letter-spacing: 0.5px;
-      margin-top: 4px;
     }
 
-    .categories-grid {
+    /* Day 7.5h Target Status Banner */
+    .day-target-status-card {
+      border-radius: 8px;
+      padding: 12px 14px;
       display: flex;
+      flex-direction: column;
       gap: 8px;
-      overflow-x: auto;
-      padding-bottom: 4px;
-      scrollbar-width: none;
+      border: 1px solid transparent;
+      transition: all 0.2s ease;
     }
 
-    .categories-grid::-webkit-scrollbar {
-      display: none;
+    .day-target-status-card.met {
+      background: var(--accent-green-bg);
+      border-color: var(--accent-green-border);
     }
 
-    .cat-chip {
+    .day-target-status-card.incomplete {
+      background: var(--accent-amber-bg);
+      border-color: var(--accent-amber-border);
+    }
+
+    .day-target-row-top {
       display: flex;
       align-items: center;
-      gap: 6px;
-      background: #1e1e1e;
-      border: 1px solid #333333;
-      border-radius: 8px;
-      padding: 7px 11px;
-      font-size: 11px;
-      font-weight: 600;
-      cursor: pointer;
-      white-space: nowrap;
-      transition: all 0.15s ease;
-    }
-
-    .cat-chip:hover {
-      background: #2a2a2a;
-      transform: translateY(-1px);
-    }
-
-    /* Logs Section */
-    .logs-header {
-      display: flex;
       justify-content: space-between;
-      align-items: center;
-      margin-top: 4px;
     }
 
-    .log-list {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .log-item {
-      display: flex;
-      align-items: center;
-      background: var(--card-bg);
-      border: 1px solid #282828;
-      border-radius: 8px;
-      padding: 10px 14px;
-      gap: 12px;
-      transition: background 0.15s ease;
-    }
-
-    .log-item:hover {
-      background: #222222;
-    }
-
-    .log-strip {
-      width: 4px;
-      height: 36px;
-      border-radius: 2px;
-      flex-shrink: 0;
-    }
-
-    .log-content {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      gap: 3px;
-    }
-
-    .log-meta {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .log-cat {
-      font-size: 12px;
+    .day-target-title {
+      font-size: 13px;
       font-weight: 700;
     }
 
-    .log-time {
-      font-size: 11px;
-      color: var(--text-muted);
+    .day-target-status-card.met .day-target-title {
+      color: var(--accent-green-text);
     }
 
-    .log-desc {
-      font-size: 12px;
-      color: #dddddd;
-      word-break: break-word;
+    .day-target-status-card.incomplete .day-target-title {
+      color: var(--accent-amber-text);
     }
 
-    .log-duration {
+    .day-target-subtext {
       font-size: 11px;
+      color: #CCCCCC;
+      margin-top: 2px;
+    }
+
+    .day-target-pct {
+      font-size: 16px;
       font-weight: 700;
-      background: #282828;
-      color: #aaaaaa;
-      padding: 4px 8px;
-      border-radius: 4px;
-      font-family: var(--font-mono);
     }
 
-    .btn-delete {
-      background: transparent;
-      border: none;
-      color: #666666;
-      cursor: pointer;
-      font-size: 14px;
-      padding: 4px;
-      border-radius: 4px;
-      transition: all 0.15s ease;
+    .day-target-status-card.met .day-target-pct {
+      color: var(--accent-green-text);
     }
 
-    .btn-delete:hover {
-      color: var(--accent-red);
-      background: rgba(234, 67, 53, 0.1);
+    .day-target-status-card.incomplete .day-target-pct {
+      color: var(--accent-amber-text);
     }
 
-    .empty-state {
-      padding: 28px;
-      text-align: center;
-      color: var(--text-dim);
-      font-size: 12px;
-      line-height: 1.6;
+    .day-target-progress-bg {
+      width: 100%;
+      height: 6px;
+      background: rgba(0,0,0,0.3);
+      border-radius: 3px;
+      overflow: hidden;
     }
 
-    /* Modals */
+    .day-target-progress-fill {
+      height: 100%;
+      transition: width 0.3s ease;
+    }
+
+    .day-target-status-card.met .day-target-progress-fill {
+      background: #107C41;
+    }
+
+    .day-target-status-card.incomplete .day-target-progress-fill {
+      background: var(--accent-amber);
+    }
+
+    /* ======================================================== */
+    /* MODALS & DIALOGS                                         */
+    /* ======================================================== */
     .modal-backdrop {
       position: fixed;
-      inset: 0;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
       background: rgba(0, 0, 0, 0.7);
       backdrop-filter: blur(4px);
       display: none;
@@ -439,36 +959,54 @@
       display: flex;
     }
 
-    .modal {
-      background: #1e1e1e;
-      border: 1px solid #383838;
-      border-radius: 14px;
+    .modal-dialog {
+      background: #181818;
+      border: 1px solid #333333;
+      border-radius: 10px;
       width: 100%;
-      max-width: 440px;
-      padding: 22px;
+      max-width: 540px;
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.6);
       display: flex;
       flex-direction: column;
-      gap: 16px;
-      box-shadow: 0 16px 40px rgba(0,0,0,0.6);
+      overflow: hidden;
+      animation: modalSlide 0.18s ease-out;
+    }
+
+    @keyframes modalSlide {
+      from { transform: scale(0.95); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
     }
 
     .modal-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid #282828;
       display: flex;
-      justify-content: space-between;
       align-items: center;
+      justify-content: space-between;
     }
 
-    .modal-title {
-      font-size: 16px;
+    .modal-header h3 {
+      font-size: 15px;
       font-weight: 700;
+      color: #FFFFFF;
     }
 
-    .close-btn {
-      background: transparent;
-      border: none;
-      color: #888888;
-      font-size: 20px;
-      cursor: pointer;
+    .modal-body {
+      padding: 18px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      max-height: 75vh;
+      overflow-y: auto;
+    }
+
+    .modal-footer {
+      padding: 14px 20px;
+      border-top: 1px solid #282828;
+      background: #141414;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
     }
 
     .form-group {
@@ -477,341 +1015,727 @@
       gap: 6px;
     }
 
-    .form-label {
-      font-size: 11px;
+    .form-group label {
+      font-size: 12px;
       font-weight: 600;
-      color: var(--text-muted);
+      color: #AAAAAA;
     }
 
-    .form-input, .form-select {
-      background: #141414;
-      border: 1px solid #333333;
-      border-radius: 8px;
-      padding: 10px 12px;
-      color: white;
+    .form-control {
+      background: #242424;
+      border: 1px solid #383838;
+      border-radius: 6px;
+      padding: 8px 12px;
+      color: #FFFFFF;
       font-size: 13px;
+      font-family: inherit;
       outline: none;
       transition: border-color 0.15s ease;
     }
 
-    .form-input:focus, .form-select:focus {
+    .form-control:focus {
       border-color: var(--primary);
     }
 
-    .duration-chips {
+    textarea.form-control {
+      min-height: 80px;
+      resize: vertical;
+    }
+
+    .duration-chips-group {
       display: flex;
       gap: 6px;
+      flex-wrap: wrap;
     }
 
     .duration-chip {
-      flex: 1;
-      text-align: center;
-      padding: 7px;
-      background: #252525;
+      background: #242424;
       border: 1px solid #383838;
       border-radius: 6px;
+      padding: 6px 12px;
       font-size: 12px;
       font-weight: 600;
+      color: #DDDDDD;
       cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .duration-chip:hover {
+      background: #303030;
     }
 
     .duration-chip.selected {
       background: var(--primary);
       border-color: var(--primary);
-      color: white;
+      color: #FFFFFF;
     }
 
+    /* Toast */
     .toast {
       position: fixed;
       bottom: 24px;
-      left: 50%;
-      transform: translateX(-50%) translateY(100px);
+      right: 24px;
       background: #222222;
-      border: 1px solid #3a3a3a;
-      padding: 10px 18px;
+      border: 1px solid #444444;
       border-radius: 8px;
-      font-size: 12px;
-      font-weight: 600;
-      color: white;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.5);
-      z-index: 2000;
-      opacity: 0;
-      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      padding: 12px 18px;
+      font-size: 13px;
+      color: #FFFFFF;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
       display: flex;
       align-items: center;
       gap: 8px;
+      transform: translateY(100px);
+      opacity: 0;
+      transition: all 0.25s cubic-bezier(0.1, 0.9, 0.2, 1);
+      z-index: 2000;
     }
 
     .toast.show {
-      transform: translateX(-50%) translateY(0);
+      transform: translateY(0);
       opacity: 1;
     }
 
-    @media (max-width: 480px) {
-      .timer-display {
-        font-size: 46px;
+    /* Responsive Rules */
+    @media (max-width: 1024px) {
+      .dashboard-split-grid, .calendar-split-grid {
+        grid-template-columns: 1fr;
       }
-      .brand-info h1 {
-        font-size: 15px;
+      .kpi-metrics-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 720px) {
+      .tracker-info-row {
+        grid-template-columns: 1fr;
+      }
+      .kpi-metrics-grid {
+        grid-template-columns: 1fr;
+      }
+      .top-nav-bar {
+        padding: 10px 14px;
+      }
+      main {
+        padding: 14px;
       }
     }
   </style>
 </head>
 <body>
+  <div class="app-wrapper">
 
-  <div class="container">
-    <!-- Header -->
-    <header>
-      <div class="brand">
+    <!-- Top Mock Titlebar -->
+    <div class="window-titlebar">
+      <span>Work Time Tracker • Dev & Support (Server Edition)</span>
+      <span id="serverStatusIndicator">🟢 Online</span>
+    </div>
+
+    <!-- Navigation Bar -->
+    <header class="top-nav-bar">
+      <!-- Brand -->
+      <div class="brand-section" id="btnBrandHome">
         <div class="brand-icon">⏱️</div>
-        <div class="brand-info">
+        <div class="brand-text">
           <h1>Work Time Tracker</h1>
-          <p>Home Server Web App</p>
+          <p>30-Min Interval & Support Logger</p>
         </div>
       </div>
-      <div class="header-actions">
-        <button class="btn btn-green" id="btnExportModal">📊 Export Excel</button>
-        <button class="btn" id="btnSettingsModal">⚙️ <span id="statusIndicator">Key</span></button>
+
+      <!-- Navigation Tabs (3 Views) -->
+      <div class="nav-tabs-pill">
+        <button class="nav-tab-btn active" id="tabBtnTracker" data-view="viewTracker">⏱️ Tracker & Timer</button>
+        <button class="nav-tab-btn" id="tabBtnDashboard" data-view="viewDashboard">📊 Weekly Dashboard</button>
+        <button class="nav-tab-btn" id="tabBtnCalendar" data-view="viewCalendar">📅 Calendar & Day Editor</button>
+      </div>
+
+      <!-- Fast Actions & Mini Timer -->
+      <div class="nav-actions">
+        <div class="mini-timer-pill" title="Wall-clock synced interval countdown">
+          <span class="status-dot" id="navStatusDot"></span>
+          <span id="navCountdownText">30:00</span>
+        </div>
+
+        <button class="btn" id="btnOpenSyncSettings" title="Configure Docker Server or API Key">
+          ☁️ Sync Settings
+        </button>
+
+        <button class="btn btn-excel" id="btnOpenExportModal" title="Export weekly summary and log to Excel">
+          📊 Export Week (.xlsx)
+        </button>
+
+        <button class="btn btn-primary" id="btnTopCheckIn">
+          + Check-in Now
+        </button>
       </div>
     </header>
 
-    <!-- 1. Live Countdown Timer Card -->
-    <div class="card timer-card">
-      <div class="timer-status-row">
-        <div class="status-badge" id="timerBadge">
-          <span class="status-dot"></span>
-          <span id="timerStatusText">INTERVAL ACTIVE</span>
+    <!-- Main Workspace -->
+    <main>
+
+      <!-- ======================================================== -->
+      <!-- VIEW 1: TRACKER & TIMER                                  -->
+      <!-- ======================================================== -->
+      <div class="view-container active" id="viewTracker">
+        
+        <!-- Main Countdown Card -->
+        <div class="card countdown-card">
+          <div class="countdown-top-row">
+            <div class="countdown-left">
+              <div class="status-badge" id="trackerStatusBadge">
+                <span class="status-dot" id="trackerStatusDot"></span>
+                <span id="trackerStatusText">ACTIVE</span>
+              </div>
+              <div class="countdown-display-large" id="mainCountdownText">30:00</div>
+              <div class="countdown-subtext" id="mainCountdownSubtext">remaining until 30m check-in prompt</div>
+            </div>
+
+            <div class="countdown-controls">
+              <button class="btn btn-primary" id="btnStartTimer">▶ Start</button>
+              <button class="btn" id="btnPauseTimer">⏸ Pause</button>
+              <button class="btn" id="btnResetTimer" title="Align to current half-hour">🔄 Reset</button>
+              <button class="btn" id="btnPromptNow">📝 Check-in Now</button>
+            </div>
+          </div>
+
+          <!-- Slim Progress Bar -->
+          <div class="slim-progress-bar">
+            <div class="slim-progress-fill" id="mainProgressBarFill"></div>
+          </div>
         </div>
-        <span style="color: var(--text-muted);">30-Min Block</span>
+
+        <!-- 2-Column Info Row -->
+        <div class="tracker-info-row">
+          
+          <!-- Interval Selector -->
+          <div class="card">
+            <div class="info-card-content">
+              <div class="info-card-text">
+                <h3>Timer Interval</h3>
+                <p>Time between automatic popups</p>
+              </div>
+              <select class="interval-select" id="intervalSelector">
+                <option value="30" selected>30 Minutes (Default)</option>
+                <option value="15">15 Minutes</option>
+                <option value="5">5 Minutes</option>
+                <option value="1">1 Minute (Fast Test)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Today's Quick Summary & 7.5h Target -->
+          <div class="card">
+            <div class="info-card-content">
+              <div style="display: flex; align-items: center;">
+                <div class="target-circle-badge" id="todayTargetCircle">✓</div>
+                <div class="info-card-text">
+                  <h3 id="todayTotalHeading">Today: 0.0h / 7.5h (0 blocks)</h3>
+                  <p id="weekTotalSubheading">This Week: 0h 00m total</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Quick Reference Categories Banner -->
+        <div class="card categories-banner">
+          <div class="banner-title">Categories Configured for Software Development & Prod Support</div>
+          <div class="banner-chips" id="categoriesBannerChips">
+            <!-- Rendered by JavaScript -->
+          </div>
+        </div>
+
       </div>
 
-      <div class="timer-display" id="timerCountdown">27:00</div>
+      <!-- ======================================================== -->
+      <!-- VIEW 2: WEEKLY DASHBOARD                                 -->
+      <!-- ======================================================== -->
+      <div class="view-container" id="viewDashboard">
+        
+        <!-- Week Header Bar -->
+        <div class="dashboard-header-bar">
+          <div class="week-nav-group">
+            <button class="btn btn-icon-only" id="btnPrevWeek" title="Previous Week">◀</button>
+            <button class="btn btn-icon-only" id="btnNextWeek" title="Next Week">▶</button>
+            <button class="btn" id="btnCurrentWeek">Current Week</button>
+            <div class="week-title-block">
+              <p>WEEKLY SUMMARY & TOTALS</p>
+              <h2 id="dashboardWeekRangeText">Current Work Week: Mon, Sep 21 – Sun, Sep 27</h2>
+            </div>
+          </div>
 
-      <div class="progress-bar-bg">
-        <div class="progress-bar-fill" id="timerProgress"></div>
+          <div style="display: flex; gap: 8px;">
+            <button class="btn btn-excel" id="btnDashboardExportExcel">
+              📊 Export to Excel (.xlsx)
+            </button>
+            <button class="btn" id="btnDashboardRefresh">
+              🔄 Refresh
+            </button>
+          </div>
+        </div>
+
+        <!-- Top 4 KPI Metric Cards -->
+        <div class="kpi-metrics-grid">
+          
+          <div class="card kpi-card">
+            <span class="kpi-label">Total Tracked This Week</span>
+            <span class="kpi-value" id="kpiTotalHours" style="color: var(--accent-blue);">0.0 hrs</span>
+            <span class="kpi-subtext" id="kpiTotalBlocks">0 check-in blocks (30m ea)</span>
+          </div>
+
+          <div class="card kpi-card">
+            <span class="kpi-label">7.5h Target Days Met</span>
+            <span class="kpi-value" id="kpiTargetDays" style="color: var(--accent-green-text);">0 of 5 days</span>
+            <span class="kpi-subtext" id="kpiTargetDaysPct">0% target completion</span>
+          </div>
+
+          <div class="card kpi-card">
+            <span class="kpi-label">Dominant Activity</span>
+            <span class="kpi-value" id="kpiDominantActivity" style="color: var(--accent-purple); font-size: 18px;">None</span>
+            <span class="kpi-subtext" id="kpiDominantHours">0 hrs logged</span>
+          </div>
+
+          <div class="card kpi-card">
+            <span class="kpi-label">Support & Triage Ratio</span>
+            <span class="kpi-value" id="kpiSupportRatio" style="color: var(--accent-amber);">0.0 hrs (0%)</span>
+            <span class="kpi-subtext">Production support & triage</span>
+          </div>
+
+        </div>
+
+        <!-- Main Content Split (Category Breakdown + Activity Log) -->
+        <div class="dashboard-split-grid">
+          
+          <!-- Category Breakdown (Left) -->
+          <div class="card split-pane-card">
+            <div class="split-pane-header">
+              <h3>Time by Category</h3>
+              <span id="catSummaryCount">0 categories</span>
+            </div>
+            <div class="scrollable-list" id="categoryBreakdownList">
+              <div class="empty-notice">No category data recorded this week yet.</div>
+            </div>
+          </div>
+
+          <!-- Chronological Activity Log (Right) -->
+          <div class="card split-pane-card">
+            <div class="split-pane-header">
+              <h3>Work Week Log Entries</h3>
+              <span id="dashboardLogsCount">0 entries</span>
+            </div>
+            <div class="scrollable-list" id="weeklyActivityLogsList">
+              <div class="empty-notice">No entries yet this week. Click 'Check-in Now' or let the 30-min timer prompt you.</div>
+            </div>
+          </div>
+
+        </div>
+
       </div>
 
-      <div class="timer-controls">
-        <button class="btn" id="btnToggleTimer" style="background: #2a2a2a;">⏸️ Pause</button>
-        <button class="btn" id="btnResetTimer">↺ Reset</button>
-        <button class="btn btn-primary" id="btnOpenCheckIn">+ Check-in</button>
-      </div>
-    </div>
+      <!-- ======================================================== -->
+      <!-- VIEW 3: CALENDAR & DAY EDITOR                            -->
+      <!-- ======================================================== -->
+      <div class="view-container" id="viewCalendar">
+        
+        <div class="calendar-split-grid">
+          
+          <!-- Left: Month Calendar -->
+          <div class="card calendar-card">
+            
+            <div class="calendar-month-nav">
+              <div style="display: flex; gap: 4px;">
+                <button class="btn btn-icon-only" id="btnPrevMonth" title="Previous Month">◀</button>
+                <button class="btn btn-icon-only" id="btnNextMonth" title="Next Month">▶</button>
+                <button class="btn" id="btnCalendarToday">Today</button>
+              </div>
 
-    <!-- 2. Daily 7.5-Hour Goal Card -->
-    <div class="card target-card" id="targetCard">
-      <div class="target-icon-box" id="targetIcon">⏱️</div>
-      <div class="target-info">
-        <div class="target-title" id="targetTitle">Daily 7.5h Goal in Progress</div>
-        <div class="target-details" id="targetDetails">Today: 0.0h of 7.5h target (0 blocks)</div>
-        <div class="progress-bar-bg" style="margin-top: 4px;">
-          <div class="progress-bar-fill target-progress-fill" id="targetProgressBar"></div>
+              <div class="calendar-month-title" id="calendarMonthTitle">September 2026</div>
+
+              <button class="btn btn-excel" id="btnCalendarExportWeek">
+                📊 Export Week (.xlsx)
+              </button>
+            </div>
+
+            <!-- Mon-Sun Header -->
+            <div class="calendar-weekdays-row">
+              <span>MON</span>
+              <span>TUE</span>
+              <span>WED</span>
+              <span>THU</span>
+              <span>FRI</span>
+              <span>SAT</span>
+              <span>SUN</span>
+            </div>
+
+            <!-- Calendar Days Uniform Grid -->
+            <div class="calendar-days-grid" id="calendarDaysGrid">
+              <!-- Rendered by JavaScript -->
+            </div>
+
+            <!-- Legend -->
+            <div class="calendar-legend">
+              <span class="cal-target-badge met">✓ 7.5h Logged</span>
+              <span>Target Met</span>
+              <span class="cal-target-badge partial">X.Xh / 7.5h</span>
+              <span>Partial</span>
+              <span style="display: inline-flex; align-items: center; gap: 4px;">
+                <span class="today-indicator-dot"></span> Today
+              </span>
+            </div>
+
+          </div>
+
+          <!-- Right: Daily Time Log Editor -->
+          <div class="card day-editor-card">
+            
+            <div class="day-editor-header">
+              <div>
+                <p>DAILY TIME LOG EDITOR</p>
+                <h2 id="dayEditorTitle">Monday, Sep 21, 2026</h2>
+              </div>
+              <button class="btn btn-primary" id="btnAddBlockForDay">
+                + Add 30m Block
+              </button>
+            </div>
+
+            <!-- 7.5h Daily Target Status Card -->
+            <div class="day-target-status-card met" id="dayTargetStatusCard">
+              <div class="day-target-row-top">
+                <div>
+                  <div class="day-target-title" id="dayTargetStatusHeading">✓ 7.5-Hour Target Achieved!</div>
+                  <div class="day-target-subtext" id="dayTargetSubheading">Total Logged: 7.5h (15 blocks)</div>
+                </div>
+                <div class="day-target-pct" id="dayTargetPctText">100%</div>
+              </div>
+              <div class="day-target-progress-bg">
+                <div class="day-target-progress-fill" id="dayTargetProgressFill" style="width: 100%;"></div>
+              </div>
+            </div>
+
+            <!-- Day's Time Blocks List -->
+            <div class="split-pane-header" style="margin-top: 4px;">
+              <h3>Time Blocks for this Day</h3>
+              <span id="dayBlocksCount">0 blocks (0.0h)</span>
+            </div>
+
+            <div class="scrollable-list" id="dayBlocksList">
+              <div class="empty-notice">No entries recorded for this day. Click '+ Add 30m Block' above to backfill or add work logs.</div>
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </main>
+
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- MODAL: CHECK-IN / ADD BLOCK                              -->
+  <!-- ======================================================== -->
+  <div class="modal-backdrop" id="modalCheckIn">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 id="checkInModalTitle">⏱️ Time Check-in • 30m Log</h3>
+        <button class="btn btn-icon-only" id="btnCloseCheckIn">✕</button>
+      </div>
+      <div class="modal-body">
+        
+        <!-- Header notice -->
+        <div style="background: #1B3A57; border-radius: 6px; padding: 10px 14px; display: flex; align-items: center; gap: 12px;">
+          <span style="font-size: 24px;">⏱️</span>
+          <div>
+            <div style="font-size: 11px; font-weight: bold; color: var(--accent-blue);">30-MINUTE INTERVAL LOG</div>
+            <div style="font-size: 13px; font-weight: bold; color: white;">What have you been working on?</div>
+          </div>
+        </div>
+
+        <!-- Quick Categories -->
+        <div class="form-group">
+          <label>Quick Select Category:</label>
+          <div style="display: flex; flex-wrap: wrap; gap: 6px;" id="checkInQuickCats">
+            <!-- Rendered by JS -->
+          </div>
+        </div>
+
+        <!-- Category Dropdown -->
+        <div class="form-group">
+          <label for="inputCheckInCategory">Selected Category</label>
+          <select class="form-control" id="inputCheckInCategory">
+            <!-- Rendered by JS -->
+          </select>
+        </div>
+
+        <!-- Duration Selection -->
+        <div class="form-group">
+          <label>Duration</label>
+          <div class="duration-chips-group" id="checkInDurationChips">
+            <div class="duration-chip" data-mins="15">15m</div>
+            <div class="duration-chip selected" data-mins="30">30m (Default)</div>
+            <div class="duration-chip" data-mins="45">45m</div>
+            <div class="duration-chip" data-mins="60">1.0h</div>
+            <div class="duration-chip" data-mins="90">1.5h</div>
+            <div class="duration-chip" data-mins="120">2.0h</div>
+          </div>
+        </div>
+
+        <!-- Description / Notes -->
+        <div class="form-group">
+          <label for="inputCheckInDescription">Description / Notes (Optional)</label>
+          <textarea class="form-control" id="inputCheckInDescription" placeholder="Task summary, ticket ID (e.g., PROD-1234), or PR review notes..."></textarea>
+        </div>
+
+      </div>
+      <div class="modal-footer">
+        <button class="btn" id="btnCheckInSnooze">Snooze 5 mins</button>
+        <div style="display: flex; gap: 8px;">
+          <button class="btn" id="btnCancelCheckIn">Skip</button>
+          <button class="btn btn-primary" id="btnSaveCheckIn">Save 30 Minutes</button>
         </div>
       </div>
     </div>
+  </div>
 
-    <!-- 3. Quick Category Check-in Shortcuts -->
-    <div class="section-title">QUICK CHECK-IN CATEGORIES</div>
-    <div class="categories-grid" id="categoriesGrid">
-      <!-- Populated via JS -->
-    </div>
+  <!-- ======================================================== -->
+  <!-- MODAL: EDIT LOG ENTRY                                    -->
+  <!-- ======================================================== -->
+  <div class="modal-backdrop" id="modalEditLog">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3>✏️ Edit Time Block</h3>
+        <button class="btn btn-icon-only" id="btnCloseEditLog">✕</button>
+      </div>
+      <div class="modal-body">
+        
+        <input type="hidden" id="editLogId">
 
-    <!-- 4. Today's Logged Blocks Header & List -->
-    <div class="logs-header">
-      <div class="section-title" id="todayHeader">TODAY'S LOGGED BLOCKS (0)</div>
-      <button class="btn" id="btnRefresh" style="padding: 4px 8px; font-size: 11px;">↺ Refresh</button>
-    </div>
-    <div class="log-list" id="todayLogsList">
-      <div class="empty-state">No blocks logged yet today.<br>Tap Check-in or start the interval timer!</div>
-    </div>
+        <div class="form-group">
+          <label for="inputEditCategory">Category</label>
+          <select class="form-control" id="inputEditCategory">
+            <!-- Rendered by JS -->
+          </select>
+        </div>
 
-    <!-- 5. Previous Logged Blocks Header & List -->
-    <div id="pastLogsContainer" style="display: none; flex-direction: column; gap: 8px;">
-      <div class="section-title" id="pastHeader" style="margin-top: 8px;">PREVIOUS LOGGED BLOCKS (0)</div>
-      <div class="log-list" id="pastLogsList"></div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div class="form-group">
+            <label for="inputEditTime">Time of Day (HH:mm)</label>
+            <input type="text" class="form-control" id="inputEditTime" placeholder="e.g. 09:30 or 14:00">
+          </div>
+          <div class="form-group">
+            <label for="inputEditDuration">Duration</label>
+            <select class="form-control" id="inputEditDuration">
+              <option value="15">15 Minutes</option>
+              <option value="30" selected>30 Minutes (1 block)</option>
+              <option value="45">45 Minutes</option>
+              <option value="60">1.0 Hour (2 blocks)</option>
+              <option value="90">1.5 Hours (3 blocks)</option>
+              <option value="120">2.0 Hours (4 blocks)</option>
+              <option value="150">2.5 Hours (5 blocks)</option>
+              <option value="180">3.0 Hours (6 blocks)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="inputEditDescription">Description / Ticket Notes</label>
+          <textarea class="form-control" id="inputEditDescription" placeholder="Task summary, ticket ID, or investigation notes..."></textarea>
+        </div>
+
+      </div>
+      <div class="modal-footer">
+        <button class="btn" id="btnCancelEditLog">Cancel</button>
+        <button class="btn btn-primary" id="btnSaveEditLog">Save Changes</button>
+      </div>
     </div>
   </div>
 
-  <!-- CHECK-IN MODAL -->
-  <div class="modal-backdrop" id="checkInModal">
-    <div class="modal">
+  <!-- ======================================================== -->
+  <!-- MODAL: EXCEL EXPORT                                      -->
+  <!-- ======================================================== -->
+  <div class="modal-backdrop" id="modalExport">
+    <div class="modal-dialog">
       <div class="modal-header">
-        <div class="modal-title">Record 30-Min Work Block</div>
-        <button class="close-btn" id="btnCloseCheckIn">&times;</button>
+        <h3>📊 Export Work Week to Microsoft Excel</h3>
+        <button class="btn btn-icon-only" id="btnCloseExport">✕</button>
       </div>
+      <div class="modal-body">
+        <p style="font-size: 13px; color: #CCCCCC; line-height: 1.4;">
+          Generates a professional two-sheet Excel report (<code>.xlsx</code>) containing your <strong>Weekly Summary</strong> (KPI tiles, category breakdown, 7.5h daily target checklist) and detailed <strong>Activity Log</strong>.
+        </p>
 
-      <div class="form-group">
-        <label class="form-label">Category</label>
-        <select class="form-select" id="inputCategory">
-          <option value="Feature Development & Coding">💻 Feature Development & Coding</option>
-          <option value="Production Incident & Triage">🚨 Production Incident & Triage</option>
-          <option value="Prod Support & Monitoring">🔍 Prod Support & Monitoring</option>
-          <option value="Bug Fixing & Investigation">🐛 Bug Fixing & Investigation</option>
-          <option value="Code Review & Pull Requests">👥 Code Review & Pull Requests</option>
-          <option value="Deployments & Releases">🚀 Deployments & Releases</option>
-          <option value="Architecture & Tech Design">📐 Architecture & Tech Design</option>
-          <option value="Standups, Meetings & Syncs">💬 Standups, Meetings & Syncs</option>
-          <option value="User Inquiries & On-Call Admin">📞 User Inquiries & On-Call Admin</option>
-          <option value="Documentation & Knowledge Base">📚 Documentation & Knowledge Base</option>
-          <option value="Break / Other">☕ Break / Other</option>
-        </select>
-      </div>
+        <div class="form-group" style="margin-top: 6px;">
+          <label for="exportWeekSelect">Select Work Week:</label>
+          <select class="form-control" id="exportWeekSelect">
+            <option value="current">Current Work Week</option>
+            <option value="previous">Previous Work Week</option>
+            <option value="custom">Custom Date...</option>
+          </select>
+        </div>
 
-      <div class="form-group">
-        <label class="form-label">Duration</label>
-        <div class="duration-chips">
-          <div class="duration-chip" data-mins="15">15m</div>
-          <div class="duration-chip selected" data-mins="30">30m</div>
-          <div class="duration-chip" data-mins="45">45m</div>
-          <div class="duration-chip" data-mins="60">1h</div>
+        <div class="form-group" id="customDateGroup" style="display: none;">
+          <label for="inputCustomDate">Pick Date in Week:</label>
+          <input type="date" class="form-control" id="inputCustomDate">
         </div>
       </div>
-
-      <div class="form-group">
-        <label class="form-label">Description / Ticket Notes (Optional)</label>
-        <input type="text" class="form-input" id="inputDescription" placeholder="e.g. Fixed bug #429 or auth middleware">
-      </div>
-
-      <div style="display: flex; gap: 8px; margin-top: 6px;">
-        <button class="btn" id="btnCancelCheckIn" style="flex: 1;">Cancel</button>
-        <button class="btn btn-primary" id="btnSaveCheckIn" style="flex: 1;">Save Block</button>
+      <div class="modal-footer">
+        <button class="btn" id="btnCancelExport">Cancel</button>
+        <button class="btn btn-excel" id="btnDownloadExcel">
+          📥 Download Excel (.xlsx)
+        </button>
       </div>
     </div>
   </div>
 
-  <!-- EXCEL EXPORT MODAL -->
-  <div class="modal-backdrop" id="exportModal">
-    <div class="modal">
+  <!-- ======================================================== -->
+  <!-- MODAL: SYNC SETTINGS                                     -->
+  <!-- ======================================================== -->
+  <div class="modal-backdrop" id="modalSettings">
+    <div class="modal-dialog">
       <div class="modal-header">
-        <div class="modal-title">📊 Export Work Week to Excel</div>
-        <button class="close-btn" id="btnCloseExport">&times;</button>
+        <h3>☁️ Server & API Key Settings</h3>
+        <button class="btn btn-icon-only" id="btnCloseSettings">✕</button>
       </div>
-      <p style="font-size: 12px; color: var(--text-muted); line-height: 1.5;">
-        Generates a professional ClosedXML spreadsheet containing:
-        <br>• <strong>Weekly Summary</strong>: Total hours, 7.5h target checklist, & Category breakdown.
-        <br>• <strong>Activity Log</strong>: Detailed list of every logged interval block.
-      </p>
+      <div class="modal-body">
+        <p style="font-size: 12px; color: #AAAAAA;">
+          Connect to your WorkTimeTracker Docker Home Server. The API Key is securely stored in your browser's <code>localStorage</code>.
+        </p>
 
-      <div class="form-group">
-        <label class="form-label">Select Work Week (Monday – Sunday)</label>
-        <select class="form-select" id="exportWeekSelect">
-          <option value="current">Current Work Week</option>
-          <option value="previous">Previous Work Week</option>
-          <option value="custom">Custom Date in Week...</option>
-        </select>
+        <div class="form-group">
+          <label for="inputApiKey">Server API Key (X-API-Key)</label>
+          <input type="password" class="form-control" id="inputApiKey" placeholder="Enter API Key configured in your server .env">
+        </div>
+
+        <div style="display: flex; gap: 8px;">
+          <button class="btn" id="btnTestConn">Test Connection</button>
+        </div>
+
+        <div id="testConnectionStatus" style="font-size: 12px; padding: 8px 12px; border-radius: 6px; background: #202020; display: none;"></div>
+
+        <div style="font-size: 11px; color: #666666; margin-top: 4px; line-height: 1.4;">
+          <strong>Direct Browser Excel Downloads:</strong> Queries automatically include <code>?key=&lt;API_KEY&gt;</code> for seamless 1-click downloads.
+        </div>
       </div>
-
-      <div class="form-group" id="customDateGroup" style="display: none;">
-        <label class="form-label">Choose Any Date in the Week</label>
-        <input type="date" class="form-input" id="inputCustomDate">
-      </div>
-
-      <div style="display: flex; gap: 8px; margin-top: 8px;">
-        <button class="btn" id="btnCancelExport" style="flex: 1;">Cancel</button>
-        <button class="btn btn-green" id="btnDownloadExcel" style="flex: 1.2;">Download (.xlsx)</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- SETTINGS / API KEY MODAL -->
-  <div class="modal-backdrop" id="settingsModal">
-    <div class="modal">
-      <div class="modal-header">
-        <div class="modal-title">⚙️ Server Connection & API Key</div>
-        <button class="close-btn" id="btnCloseSettings">&times;</button>
-      </div>
-      <p style="font-size: 12px; color: var(--text-muted); line-height: 1.5;">
-        Enter the secret API Key configured in your Docker <code>.env</code> file. It will be securely remembered in your browser.
-      </p>
-
-      <div class="form-group">
-        <label class="form-label">Server API Key (X-API-Key)</label>
-        <input type="password" class="form-input" id="inputApiKey" placeholder="Enter API Key">
-      </div>
-
-      <div id="testConnectionStatus" style="font-size: 11px; display: none;"></div>
-
-      <div style="display: flex; gap: 8px; margin-top: 6px;">
-        <button class="btn" id="btnTestConn" style="flex: 1;">Test Connection</button>
-        <button class="btn btn-primary" id="btnSaveSettings" style="flex: 1;">Save & Sync</button>
+      <div class="modal-footer">
+        <div></div>
+        <div style="display: flex; gap: 8px;">
+          <button class="btn" id="btnCancelSettings">Close</button>
+          <button class="btn btn-primary" id="btnSaveSettings">Save Key</button>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- Floating Toast -->
-  <div class="toast" id="toastMessage"></div>
+  <!-- Toast Notification -->
+  <div class="toast" id="toastMessage">Notification</div>
 
+  <!-- ======================================================== -->
+  <!-- JAVASCRIPT LOGIC                                         -->
+  <!-- ======================================================== -->
   <script>
-    // --- Data Definitions ---
+    // --- Software Development & Support Categories ---
     const CATEGORIES = [
-      { name: "Feature Development & Coding", color: "#0078D4", icon: "💻" },
-      { name: "Production Incident & Triage", color: "#E81123", icon: "🚨" },
-      { name: "Prod Support & Monitoring", color: "#FF8C00", icon: "🔍" },
-      { name: "Bug Fixing & Investigation", color: "#EA4335", icon: "🐛" },
-      { name: "Code Review & Pull Requests", color: "#8764B8", icon: "👥" },
-      { name: "Deployments & Releases", color: "#107C41", icon: "🚀" },
-      { name: "Architecture & Tech Design", color: "#00B7C3", icon: "📐" },
-      { name: "Standups, Meetings & Syncs", color: "#5C2D91", icon: "💬" },
-      { name: "User Inquiries & On-Call Admin", color: "#D83B01", icon: "📞" },
-      { name: "Documentation & Knowledge Base", color: "#4F6BED", icon: "📚" },
-      { name: "Break / Other", color: "#8A8886", icon: "☕" }
+      { name: "Feature Development & Coding", short: "💻 Coding", color: "#0078D4", bg: "#1C2E42" },
+      { name: "Production Incident & Triage", short: "🚨 Prod Incident", color: "#E81123", bg: "#3B1C1D" },
+      { name: "Prod Support & Monitoring", short: "🎫 Support & Mon", color: "#FF8C00", bg: "#3D2914" },
+      { name: "Bug Fixing & Investigation", short: "🐛 Bug Fixing", color: "#EA4335", bg: "#3A1C2B" },
+      { name: "Code Review & Pull Requests", short: "🔍 Code Review", color: "#8764B8", bg: "#2C203E" },
+      { name: "Deployments & Releases", short: "🚀 Releases", color: "#107C41", bg: "#173121" },
+      { name: "Architecture & Tech Design", short: "📐 Architecture", color: "#00B7C3", bg: "#153538" },
+      { name: "Standups, Meetings & Syncs", short: "👥 Sync / Meeting", color: "#5C2D91", bg: "#252438" },
+      { name: "User Inquiries & On-Call Admin", short: "📞 On-Call Admin", color: "#D83B01", bg: "#382318" },
+      { name: "Documentation & Knowledge Base", short: "📖 Docs & KB", color: "#4F6BED", bg: "#1E2745" },
+      { name: "Break / Other", short: "☕ Break", color: "#8A8886", bg: "#2A2A2A" }
     ];
 
-    function getCategoryColor(catName) {
-      const found = CATEGORIES.find(c => c.name.toLowerCase() === (catName || '').toLowerCase().trim());
-      return found ? found.color : "#0078D4";
+    const SUPPORT_CATEGORIES = [
+      "Production Incident & Triage",
+      "Prod Support & Monitoring",
+      "User Inquiries & On-Call Admin"
+    ];
+
+    function getCategoryInfo(name) {
+      return CATEGORIES.find(c => c.name.toLowerCase() === (name || "").toLowerCase()) || {
+        name: name || "Uncategorized",
+        short: name || "Work",
+        color: "#0078D4",
+        bg: "#1C2E42"
+      };
     }
 
-    // --- State Management ---
+    // --- State Variables ---
     let apiKey = localStorage.getItem('wtt_api_key') || '';
-    // Check if query string contains key (e.g. ?key=...)
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('key')) {
-      apiKey = urlParams.get('key');
-      localStorage.setItem('wtt_api_key', apiKey);
-    }
-
-    let isTimerRunning = true;
-    let selectedDurationMins = 30;
     let allLogs = [];
+    let isTimerRunning = true;
+    let selectedIntervalMins = 30;
+    let selectedDurationMins = 30;
+    let activeView = 'viewTracker';
 
-    // --- Audio Notification Chime ---
+    // Dates
+    let currentViewingWeekMonday = getMondayOfDate(new Date());
+    let calendarMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+    let selectedDate = new Date();
+
+    // --- Audio Chime ---
     function playChime() {
       try {
-        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContext) return;
+        const ctx = new AudioContext();
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
+
         osc.type = 'sine';
         osc.frequency.setValueAtTime(587.33, ctx.currentTime); // D5
-        osc.frequency.setValueAtTime(880, ctx.currentTime + 0.15); // A5
-        gain.gain.setValueAtTime(0.2, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.15); // A5
+
+        gain.gain.setValueAtTime(0.3, ctx.currentTime);
         gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.8);
+
         osc.connect(gain);
         gain.connect(ctx.destination);
+
         osc.start();
-        osc.stop(ctx.currentTime + 0.8);
-      } catch (e) { }
+        osc.stop(ctx.currentTime + 0.85);
+      } catch (e) {
+        console.warn('Audio chime failed:', e);
+      }
     }
 
-    // --- Wall-Clock Interval Timer Sync ---
-    function getNextHalfHourBoundary() {
+    // --- Wall-Clock Half-Hour Boundary Timer ---
+    function getNextBoundary(intervalMins) {
       const now = new Date();
-      const next = new Date(now);
-      if (now.getMinutes() < 30) {
-        next.setMinutes(30, 0, 0);
+      if (intervalMins === 30) {
+        const next = new Date(now);
+        if (now.getMinutes() < 30) {
+          next.setMinutes(30, 0, 0);
+        } else {
+          next.setHours(now.getHours() + 1, 0, 0, 0);
+        }
+        return next;
       } else {
-        next.setHours(now.getHours() + 1, 0, 0, 0);
+        // Generic interval aligned to hour
+        const next = new Date(now);
+        const curMins = now.getMinutes();
+        const nextInterval = (Math.floor(curMins / intervalMins) + 1) * intervalMins;
+        if (nextInterval >= 60) {
+          next.setHours(now.getHours() + 1, nextInterval - 60, 0, 0);
+        } else {
+          next.setMinutes(nextInterval, 0, 0);
+        }
+        return next;
       }
-      return next;
     }
 
     function getRemainingSeconds() {
       const now = new Date();
-      const next = getNextHalfHourBoundary();
+      const next = getNextBoundary(selectedIntervalMins);
       return Math.max(0, Math.floor((next - now) / 1000));
     }
 
-    let lastTriggeredMinute = -1;
+    let lastTriggeredBoundaryKey = null;
 
     function updateTimerUI() {
       if (!isTimerRunning) return;
@@ -821,20 +1745,24 @@
       const secs = remaining % 60;
       const formatted = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
 
-      document.getElementById('timerCountdown').textContent = formatted;
+      // Update Large text and Nav pill
+      document.getElementById('mainCountdownText').textContent = formatted;
+      document.getElementById('navCountdownText').textContent = formatted;
       document.title = `(${formatted}) Work Time Tracker`;
 
-      const progress = ((1800 - remaining) / 1800) * 100;
-      document.getElementById('timerProgress').style.width = `${progress}%`;
+      const totalSecs = selectedIntervalMins * 60;
+      const progress = Math.min(100, Math.max(0, ((totalSecs - remaining) / totalSecs) * 100));
+      document.getElementById('mainProgressBarFill').style.width = `${progress}%`;
 
-      // Trigger pop-up check-in at boundary
+      // Check boundary trigger
       const now = new Date();
-      if ((now.getMinutes() === 0 || now.getMinutes() === 30) && now.getSeconds() === 0) {
-        if (lastTriggeredMinute !== now.getMinutes()) {
-          lastTriggeredMinute = now.getMinutes();
+      const boundaryKey = `${now.getHours()}:${now.getMinutes()}`;
+      if (remaining === 0 || (now.getSeconds() === 0 && (now.getMinutes() % selectedIntervalMins === 0))) {
+        if (lastTriggeredBoundaryKey !== boundaryKey) {
+          lastTriggeredBoundaryKey = boundaryKey;
           playChime();
           openCheckInModal();
-          showToast("⏰ 30-Minute Interval complete! Time to check in.");
+          showToast(`⏰ ${selectedIntervalMins}-Minute Interval complete! Time to check in.`);
         }
       }
     }
@@ -842,88 +1770,111 @@
     setInterval(updateTimerUI, 1000);
     updateTimerUI();
 
-    // Timer controls
-    const btnToggle = document.getElementById('btnToggleTimer');
-    btnToggle.addEventListener('click', () => {
-      isTimerRunning = !isTimerRunning;
-      const badge = document.getElementById('timerBadge');
-      const text = document.getElementById('timerStatusText');
-      if (isTimerRunning) {
-        badge.classList.remove('paused');
-        text.textContent = 'INTERVAL ACTIVE';
-        btnToggle.textContent = '⏸️ Pause';
-        updateTimerUI();
+    // Timer Controls
+    const btnStart = document.getElementById('btnStartTimer');
+    const btnPause = document.getElementById('btnPauseTimer');
+    const btnReset = document.getElementById('btnResetTimer');
+    const statusBadge = document.getElementById('trackerStatusBadge');
+    const statusText = document.getElementById('trackerStatusText');
+    const statusDot = document.getElementById('trackerStatusDot');
+    const navStatusDot = document.getElementById('navStatusDot');
+
+    function setTimerRunningState(running) {
+      isTimerRunning = running;
+      if (running) {
+        statusBadge.classList.remove('paused');
+        statusText.textContent = 'ACTIVE';
+        statusDot.classList.remove('paused');
+        navStatusDot.classList.remove('paused');
+        btnStart.style.opacity = '0.5';
+        btnPause.style.opacity = '1';
       } else {
-        badge.classList.add('paused');
-        text.textContent = 'TIMER PAUSED';
-        btnToggle.textContent = '▶️ Resume';
+        statusBadge.classList.add('paused');
+        statusText.textContent = 'PAUSED';
+        statusDot.classList.add('paused');
+        navStatusDot.classList.add('paused');
+        btnStart.style.opacity = '1';
+        btnPause.style.opacity = '0.5';
       }
-    });
-
-    document.getElementById('btnResetTimer').addEventListener('click', () => {
-      isTimerRunning = true;
-      document.getElementById('timerBadge').classList.remove('paused');
-      document.getElementById('timerStatusText').textContent = 'INTERVAL ACTIVE';
-      btnToggle.textContent = '⏸️ Pause';
-      updateTimerUI();
-      showToast("Timer aligned to current half-hour.");
-    });
-
-    // --- Toast Helper ---
-    let toastTimeout;
-    function showToast(msg) {
-      const toast = document.getElementById('toastMessage');
-      toast.textContent = msg;
-      toast.classList.add('show');
-      clearTimeout(toastTimeout);
-      toastTimeout = setTimeout(() => {
-        toast.classList.remove('show');
-      }, 3500);
     }
 
-    // --- Quick Categories Render ---
-    const catGrid = document.getElementById('categoriesGrid');
-    CATEGORIES.forEach(cat => {
-      const chip = document.createElement('div');
-      chip.className = 'cat-chip';
-      chip.style.borderColor = cat.color + '44';
-      chip.innerHTML = `<span>${cat.icon}</span><span style="color: ${cat.color};">${cat.name}</span>`;
-      chip.addEventListener('click', () => {
-        document.getElementById('inputCategory').value = cat.name;
-        openCheckInModal();
-      });
-      catGrid.appendChild(chip);
+    btnStart.addEventListener('click', () => {
+      setTimerRunningState(true);
+      updateTimerUI();
+      showToast('Interval timer resumed.');
     });
 
-    // --- Duration Selector in Modal ---
-    document.querySelectorAll('.duration-chip').forEach(chip => {
-      chip.addEventListener('click', () => {
-        document.querySelectorAll('.duration-chip').forEach(c => c.classList.remove('selected'));
-        chip.classList.add('selected');
-        selectedDurationMins = parseInt(chip.getAttribute('data-mins'), 10);
-      });
+    btnPause.addEventListener('click', () => {
+      setTimerRunningState(false);
+      showToast('Interval timer paused.');
     });
 
-    // --- Date Helpers ---
+    btnReset.addEventListener('click', () => {
+      setTimerRunningState(true);
+      updateTimerUI();
+      showToast('Timer aligned to current half-hour boundary.');
+    });
+
+    document.getElementById('intervalSelector').addEventListener('change', (e) => {
+      selectedIntervalMins = parseInt(e.target.value, 10) || 30;
+      document.getElementById('mainCountdownSubtext').textContent = `remaining until ${selectedIntervalMins}m check-in prompt`;
+      updateTimerUI();
+      showToast(`Interval set to ${selectedIntervalMins} minutes.`);
+    });
+
+    // --- Navigation Tabs Switching ---
+    const tabBtns = [
+      { btn: document.getElementById('tabBtnTracker'), view: 'viewTracker' },
+      { btn: document.getElementById('tabBtnDashboard'), view: 'viewDashboard' },
+      { btn: document.getElementById('tabBtnCalendar'), view: 'viewCalendar' }
+    ];
+
+    function switchView(targetViewId) {
+      activeView = targetViewId;
+      tabBtns.forEach(({ btn, view }) => {
+        if (view === targetViewId) {
+          btn.classList.add('active');
+          document.getElementById(view).classList.add('active');
+        } else {
+          btn.classList.remove('active');
+          document.getElementById(view).classList.remove('active');
+        }
+      });
+
+      if (targetViewId === 'viewDashboard') {
+        updateDashboardView();
+      } else if (targetViewId === 'viewCalendar') {
+        updateCalendarView();
+        updateDayEditorView();
+      }
+    }
+
+    tabBtns.forEach(({ btn, view }) => {
+      btn.addEventListener('click', () => switchView(view));
+    });
+
+    document.getElementById('btnBrandHome').addEventListener('click', () => switchView('viewTracker'));
+
+    // --- Date Helper Functions ---
     function parseDate(dateStr) {
       if (!dateStr) return new Date();
       const d = new Date(dateStr);
       return isNaN(d) ? new Date() : d;
     }
 
-    function isToday(date) {
-      const now = new Date();
-      return date.getFullYear() === now.getFullYear() &&
-             date.getMonth() === now.getMonth() &&
-             date.getDate() === now.getDate();
+    function isSameDay(d1, d2) {
+      return d1.getFullYear() === d2.getFullYear() &&
+             d1.getMonth() === d2.getMonth() &&
+             d1.getDate() === d2.getDate();
     }
 
-    function formatTime(date) {
-      return date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
-    }
-
-    function formatShortDate(date) {
-      return date.toLocaleDateString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+    function getMondayOfDate(d) {
+      const date = new Date(d);
+      const day = date.getDay();
+      const diff = (day === 0 ? -6 : 1) - day;
+      date.setDate(date.getDate() + diff);
+      date.setHours(0, 0, 0, 0);
+      return date;
     }
 
     function parseDurationHours(durStr) {
@@ -935,22 +1886,43 @@
       return h + (m / 60.0) + (s / 3600.0);
     }
 
-    // --- API Calls ---
+    function formatHoursMinutes(totalHours) {
+      const h = Math.floor(totalHours);
+      const m = Math.round((totalHours - h) * 60);
+      if (h > 0 && m > 0) return `${h}h ${m}m`;
+      if (h > 0) return `${h}h`;
+      if (m > 0) return `${m}m`;
+      return "0h";
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+
+    // --- Toast Helper ---
+    let toastTimeout;
+    function showToast(msg) {
+      const toast = document.getElementById('toastMessage');
+      toast.textContent = msg;
+      toast.classList.add('show');
+      clearTimeout(toastTimeout);
+      toastTimeout = setTimeout(() => toast.classList.remove('show'), 3500);
+    }
+
+    // --- API Communication ---
     async function apiRequest(path, options = {}) {
       const headers = options.headers || {};
-      if (apiKey) {
-        headers['X-API-Key'] = apiKey;
-      }
+      if (apiKey) headers['X-API-Key'] = apiKey;
       headers['Content-Type'] = 'application/json';
 
-      // Attach key in query string as fallback
       const url = apiKey ? `${path}?key=${encodeURIComponent(apiKey)}` : path;
-
       const res = await fetch(url, { ...options, headers });
+
       if (res.status === 401) {
-        document.getElementById('statusIndicator').textContent = 'Key Required';
-        document.getElementById('statusIndicator').style.color = '#ffa834';
-        throw new Error('401 Unauthorized: Please configure API Key');
+        document.getElementById('serverStatusIndicator').textContent = '⚠️ Key Required';
+        document.getElementById('serverStatusIndicator').style.color = '#FFAA44';
+        throw new Error('401 Unauthorized: Please check your API Key in Settings.');
       }
       return res;
     }
@@ -960,120 +1932,424 @@
         const res = await apiRequest('/api/logs');
         if (res.ok) {
           allLogs = await res.json();
-          document.getElementById('statusIndicator').textContent = '🟢 Server';
-          document.getElementById('statusIndicator').style.color = '#57d9a3';
-          renderLogs();
-          updateDailyGoal();
+          document.getElementById('serverStatusIndicator').textContent = '🟢 Server Online';
+          document.getElementById('serverStatusIndicator').style.color = '#57D9A3';
+          
+          updateTodaySummaryInTracker();
+          if (activeView === 'viewDashboard') updateDashboardView();
+          if (activeView === 'viewCalendar') {
+            updateCalendarView();
+            updateDayEditorView();
+          }
         }
       } catch (err) {
         console.error('Fetch logs error:', err);
       }
     }
 
-    // --- Render Logs & Target ---
-    function updateDailyGoal() {
-      const todayLogs = allLogs.filter(l => isToday(parseDate(l.timestamp || l.Timestamp)));
-      const todayHours = todayLogs.reduce((acc, l) => acc + parseDurationHours(l.duration || l.Duration), 0);
-      const targetMet = todayHours >= 7.5;
-      const progress = Math.min(100, Math.max(0, (todayHours / 7.5) * 100));
+    // --- Render Quick Category Chips in Tracker View ---
+    const bannerChipsContainer = document.getElementById('categoriesBannerChips');
+    CATEGORIES.forEach(cat => {
+      const btn = document.createElement('div');
+      btn.className = 'category-chip-btn';
+      btn.style.background = cat.bg;
+      btn.style.color = cat.color;
+      btn.innerHTML = `<span>${cat.short.split(' ')[0]}</span> <span>${cat.name}</span>`;
+      btn.addEventListener('click', () => {
+        document.getElementById('inputCheckInCategory').value = cat.name;
+        openCheckInModal();
+      });
+      bannerChipsContainer.appendChild(btn);
+    });
 
-      const card = document.getElementById('targetCard');
-      const title = document.getElementById('targetTitle');
-      const details = document.getElementById('targetDetails');
-      const icon = document.getElementById('targetIcon');
-      const bar = document.getElementById('targetProgressBar');
+    // Populate Category Dropdowns
+    const checkInCatSelect = document.getElementById('inputCheckInCategory');
+    const editCatSelect = document.getElementById('inputEditCategory');
+    const quickCatsBox = document.getElementById('checkInQuickCats');
+
+    CATEGORIES.forEach(cat => {
+      const opt1 = document.createElement('option');
+      opt1.value = cat.name;
+      opt1.textContent = cat.name;
+      checkInCatSelect.appendChild(opt1);
+
+      const opt2 = document.createElement('option');
+      opt2.value = cat.name;
+      opt2.textContent = cat.name;
+      editCatSelect.appendChild(opt2);
+
+      // Quick select button
+      const qBtn = document.createElement('button');
+      qBtn.type = 'button';
+      qBtn.className = 'btn';
+      qBtn.style.padding = '4px 8px';
+      qBtn.style.fontSize = '11px';
+      qBtn.textContent = cat.short;
+      qBtn.addEventListener('click', () => {
+        checkInCatSelect.value = cat.name;
+      });
+      quickCatsBox.appendChild(qBtn);
+    });
+
+    // --- Tracker View Today's Summary ---
+    function updateTodaySummaryInTracker() {
+      const today = new Date();
+      const todayLogs = allLogs.filter(l => isSameDay(parseDate(l.timestamp || l.Timestamp), today));
+      const todayHours = todayLogs.reduce((acc, l) => acc + parseDurationHours(l.duration || l.Duration), 0);
+      const todayBlocks = todayLogs.length;
+      const targetMet = todayHours >= 7.5;
+
+      const circle = document.getElementById('todayTargetCircle');
+      if (targetMet) {
+        circle.classList.remove('not-met');
+        circle.textContent = '✓';
+      } else {
+        circle.classList.add('not-met');
+        circle.textContent = '⏱';
+      }
+
+      document.getElementById('todayTotalHeading').textContent = `Today: ${todayHours.toFixed(1)}h / 7.5h (${todayBlocks} blocks)`;
+
+      // This week total
+      const mon = getMondayOfDate(today);
+      const sun = new Date(mon);
+      sun.setDate(mon.getDate() + 7);
+
+      const weekLogs = allLogs.filter(l => {
+        const d = parseDate(l.timestamp || l.Timestamp);
+        return d >= mon && d < sun;
+      });
+      const weekHours = weekLogs.reduce((acc, l) => acc + parseDurationHours(l.duration || l.Duration), 0);
+      document.getElementById('weekTotalSubheading').textContent = `This Week: ${formatHoursMinutes(weekHours)} total`;
+    }
+
+    // ========================================================
+    // VIEW 2: WEEKLY DASHBOARD LOGIC
+    // ========================================================
+    function updateDashboardView() {
+      const mon = new Date(currentViewingWeekMonday);
+      const sun = new Date(mon);
+      sun.setDate(mon.getDate() + 6);
+      sun.setHours(23, 59, 59, 999);
+
+      const monStr = mon.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
+      const sunStr = sun.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+      document.getElementById('dashboardWeekRangeText').textContent = `Current Work Week: ${monStr} – ${sunStr}`;
+
+      const weekLogs = allLogs.filter(l => {
+        const d = parseDate(l.timestamp || l.Timestamp);
+        return d >= mon && d <= sun;
+      }).sort((a, b) => parseDate(b.timestamp || b.Timestamp) - parseDate(a.timestamp || a.Timestamp));
+
+      const totalHours = weekLogs.reduce((acc, l) => acc + parseDurationHours(l.duration || l.Duration), 0);
+      const totalBlocks = weekLogs.length;
+
+      // 1. KPI: Total Hours
+      document.getElementById('kpiTotalHours').textContent = `${totalHours.toFixed(1)} hrs`;
+      document.getElementById('kpiTotalBlocks').textContent = `${totalBlocks} check-in ${totalBlocks === 1 ? 'block' : 'blocks'} (30m ea)`;
+
+      // 2. KPI: 7.5h Target Days Met
+      let targetDaysMet = 0;
+      for (let i = 0; i < 7; i++) {
+        const d = new Date(mon);
+        d.setDate(mon.getDate() + i);
+        const dLogs = weekLogs.filter(l => isSameDay(parseDate(l.timestamp || l.Timestamp), d));
+        const dHours = dLogs.reduce((acc, l) => acc + parseDurationHours(l.duration || l.Duration), 0);
+        if (dHours >= 7.5) targetDaysMet++;
+      }
+      document.getElementById('kpiTargetDays').textContent = `${targetDaysMet} of 5 work days`;
+      const targetPct = Math.round((targetDaysMet / 5) * 100);
+      document.getElementById('kpiTargetDaysPct').textContent = `${targetPct}% work week completion`;
+
+      // 3. Category Summaries & KPI Dominant
+      const catMap = {};
+      weekLogs.forEach(l => {
+        const cat = l.category || l.Category || 'Uncategorized';
+        const h = parseDurationHours(l.duration || l.Duration);
+        if (!catMap[cat]) catMap[cat] = { count: 0, hours: 0 };
+        catMap[cat].count++;
+        catMap[cat].hours += h;
+      });
+
+      const catList = Object.keys(catMap).map(cat => ({
+        name: cat,
+        count: catMap[cat].count,
+        hours: catMap[cat].hours,
+        percentage: totalHours > 0 ? (catMap[cat].hours / totalHours) * 100 : 0
+      })).sort((a, b) => b.hours - a.hours);
+
+      if (catList.length > 0) {
+        const top = catList[0];
+        document.getElementById('kpiDominantActivity').textContent = top.name;
+        document.getElementById('kpiDominantHours').textContent = `${formatHoursMinutes(top.hours)} (${top.percentage.toFixed(1)}%)`;
+      } else {
+        document.getElementById('kpiDominantActivity').textContent = 'No activity yet';
+        document.getElementById('kpiDominantHours').textContent = '0 hrs logged';
+      }
+
+      // 4. KPI Support & Triage Ratio
+      const supportLogs = weekLogs.filter(l => {
+        const c = l.category || l.Category || '';
+        return SUPPORT_CATEGORIES.some(sc => sc.toLowerCase() === c.toLowerCase());
+      });
+      const supportHours = supportLogs.reduce((acc, l) => acc + parseDurationHours(l.duration || l.Duration), 0);
+      const supportPct = totalHours > 0 ? (supportHours / totalHours) * 100 : 0;
+      document.getElementById('kpiSupportRatio').textContent = `${supportHours.toFixed(1)}h (${supportPct.toFixed(1)}%)`;
+
+      // Render Category Breakdown List
+      const catBreakdownEl = document.getElementById('categoryBreakdownList');
+      document.getElementById('catSummaryCount').textContent = `${catList.length} categories`;
+
+      if (catList.length === 0) {
+        catBreakdownEl.innerHTML = `<div class="empty-notice">No category data recorded this week yet.</div>`;
+      } else {
+        catBreakdownEl.innerHTML = catList.map(item => {
+          const info = getCategoryInfo(item.name);
+          return `
+            <div class="category-breakdown-row">
+              <div class="cat-row-top">
+                <div>
+                  <div class="cat-row-name">${escapeHtml(item.name)}</div>
+                  <div class="cat-row-blocks">${item.count} ${item.count === 1 ? 'block' : 'blocks'} (30m ea)</div>
+                </div>
+                <div class="cat-row-right">
+                  <div class="cat-row-duration">${formatHoursMinutes(item.hours)}</div>
+                  <div class="cat-row-pct">${item.percentage.toFixed(1)}%</div>
+                </div>
+              </div>
+              <div class="cat-progress-bg">
+                <div class="cat-progress-fill" style="width: ${Math.min(100, item.percentage)}%; background: ${info.color};"></div>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+
+      // Render Chronological Activity Log
+      const logsListEl = document.getElementById('weeklyActivityLogsList');
+      document.getElementById('dashboardLogsCount').textContent = `${weekLogs.length} ${weekLogs.length === 1 ? 'entry' : 'entries'}`;
+
+      if (weekLogs.length === 0) {
+        logsListEl.innerHTML = `<div class="empty-notice">No entries yet this week. Click 'Check-in Now' or let the 30-min timer prompt you.</div>`;
+      } else {
+        logsListEl.innerHTML = weekLogs.map(l => createLogItemHtml(l)).join('');
+        attachLogItemEvents(logsListEl);
+      }
+    }
+
+    // Week Navigation
+    document.getElementById('btnPrevWeek').addEventListener('click', () => {
+      currentViewingWeekMonday.setDate(currentViewingWeekMonday.getDate() - 7);
+      updateDashboardView();
+    });
+
+    document.getElementById('btnNextWeek').addEventListener('click', () => {
+      currentViewingWeekMonday.setDate(currentViewingWeekMonday.getDate() + 7);
+      updateDashboardView();
+    });
+
+    document.getElementById('btnCurrentWeek').addEventListener('click', () => {
+      currentViewingWeekMonday = getMondayOfDate(new Date());
+      updateDashboardView();
+    });
+
+    document.getElementById('btnDashboardRefresh').addEventListener('click', () => {
+      fetchLogs();
+      showToast('Dashboard data refreshed.');
+    });
+
+    document.getElementById('btnDashboardExportExcel').addEventListener('click', () => {
+      openExcelExportModal(currentViewingWeekMonday);
+    });
+
+    // ========================================================
+    // VIEW 3: CALENDAR & DAY EDITOR LOGIC
+    // ========================================================
+    function updateCalendarView() {
+      const year = calendarMonth.getFullYear();
+      const month = calendarMonth.getMonth();
+
+      const monthTitle = calendarMonth.toLocaleDateString([], { month: 'long', year: 'numeric' });
+      document.getElementById('calendarMonthTitle').textContent = monthTitle;
+
+      const firstDayOfMonth = new Date(year, month, 1);
+      const dayOfWeek = firstDayOfMonth.getDay(); // 0 is Sun, 1 is Mon
+      const daysSinceMonday = (dayOfWeek + 6) % 7;
+
+      const startDate = new Date(firstDayOfMonth);
+      startDate.setDate(firstDayOfMonth.getDate() - daysSinceMonday);
+
+      const gridEl = document.getElementById('calendarDaysGrid');
+      gridEl.innerHTML = '';
+
+      const today = new Date();
+
+      // 42 cells (6 rows of 7 days)
+      for (let i = 0; i < 42; i++) {
+        const cur = new Date(startDate);
+        cur.setDate(startDate.getDate() + i);
+
+        // Break if finished month on a full 35-day grid
+        if (i >= 35 && cur.getMonth() !== month && (cur.getDay() === 1)) {
+          break;
+        }
+
+        const isCurMonth = cur.getMonth() === month;
+        const isCurToday = isSameDay(cur, today);
+        const isSelected = isSameDay(cur, selectedDate);
+
+        // Calculate hours for this day
+        const dayLogs = allLogs.filter(l => isSameDay(parseDate(l.timestamp || l.Timestamp), cur));
+        const dayHours = dayLogs.reduce((acc, l) => acc + parseDurationHours(l.duration || l.Duration), 0);
+
+        let badgeClass = 'zero';
+        let badgeText = '0h';
+
+        if (dayHours >= 7.5) {
+          badgeClass = 'met';
+          badgeText = `✓ ${formatHoursMinutes(dayHours)}`;
+        } else if (dayHours > 0) {
+          badgeClass = 'partial';
+          badgeText = `${formatHoursMinutes(dayHours)} / 7.5h`;
+        }
+
+        const cell = document.createElement('div');
+        cell.className = `cal-day-cell ${isCurMonth ? '' : 'other-month'} ${isSelected ? 'selected' : ''}`;
+        cell.innerHTML = `
+          <div class="cal-day-top">
+            <span>${cur.getDate()}</span>
+            ${isCurToday ? `<span class="today-indicator-dot"></span>` : ''}
+          </div>
+          <div class="cal-target-badge ${badgeClass}">${badgeText}</div>
+        `;
+
+        cell.addEventListener('click', () => {
+          selectedDate = new Date(cur);
+          updateCalendarView();
+          updateDayEditorView();
+        });
+
+        gridEl.appendChild(cell);
+      }
+    }
+
+    function updateDayEditorView() {
+      const dateStr = selectedDate.toLocaleDateString([], { weekday: 'long', month: 'short', day: 'numeric', year: 'numeric' });
+      document.getElementById('dayEditorTitle').textContent = dateStr;
+
+      const dayLogs = allLogs.filter(l => isSameDay(parseDate(l.timestamp || l.Timestamp), selectedDate))
+                             .sort((a, b) => parseDate(a.timestamp || a.Timestamp) - parseDate(b.timestamp || b.Timestamp));
+
+      const hours = dayLogs.reduce((acc, l) => acc + parseDurationHours(l.duration || l.Duration), 0);
+      const targetMet = hours >= 7.5;
+      const pct = Math.min(100, Math.max(0, (hours / 7.5) * 100));
+
+      const card = document.getElementById('dayTargetStatusCard');
+      const heading = document.getElementById('dayTargetStatusHeading');
+      const subheading = document.getElementById('dayTargetSubheading');
+      const pctEl = document.getElementById('dayTargetPctText');
+      const fillEl = document.getElementById('dayTargetProgressFill');
+
+      pctEl.textContent = `${Math.round(pct)}%`;
+      fillEl.style.width = `${pct}%`;
 
       if (targetMet) {
-        card.classList.add('met');
-        title.textContent = '✓ 7.5h Target Achieved!';
-        icon.textContent = '✓';
+        card.className = 'day-target-status-card met';
+        heading.textContent = '✓ 7.5-Hour Target Achieved!';
+        subheading.textContent = `Total Logged: ${hours.toFixed(1)}h (${dayLogs.length} blocks)`;
       } else {
-        card.classList.remove('met');
-        title.textContent = 'Daily 7.5h Goal in Progress';
-        icon.textContent = '⏱️';
+        card.className = 'day-target-status-card incomplete';
+        const remaining = Math.max(0, 7.5 - hours);
+        heading.textContent = `Incomplete (${remaining.toFixed(1)}h remaining for 7.5h target)`;
+        subheading.textContent = `Logged so far: ${hours.toFixed(1)}h of 7.5h target`;
       }
 
-      details.textContent = `Today: ${todayHours.toFixed(1)}h of 7.5h target (${todayLogs.length} blocks)`;
-      bar.style.width = `${progress}%`;
+      document.getElementById('dayBlocksCount').textContent = `${dayLogs.length} ${dayLogs.length === 1 ? 'block' : 'blocks'} (${hours.toFixed(1)}h)`;
+
+      const listEl = document.getElementById('dayBlocksList');
+      if (dayLogs.length === 0) {
+        listEl.innerHTML = `<div class="empty-notice">No entries recorded for this day. Click '+ Add 30m Block' above to backfill or add work logs.</div>`;
+      } else {
+        listEl.innerHTML = dayLogs.map(l => createLogItemHtml(l, true)).join('');
+        attachLogItemEvents(listEl);
+      }
     }
 
-    function renderLogs() {
-      const todayList = document.getElementById('todayLogsList');
-      const pastList = document.getElementById('pastLogsList');
-      const pastContainer = document.getElementById('pastLogsContainer');
+    // Month Navigation
+    document.getElementById('btnPrevMonth').addEventListener('click', () => {
+      calendarMonth.setMonth(calendarMonth.getMonth() - 1);
+      updateCalendarView();
+    });
 
-      const todayLogs = [];
-      const pastLogs = [];
+    document.getElementById('btnNextMonth').addEventListener('click', () => {
+      calendarMonth.setMonth(calendarMonth.getMonth() + 1);
+      updateCalendarView();
+    });
 
-      allLogs.forEach(log => {
-        const d = parseDate(log.timestamp || log.Timestamp);
-        if (isToday(d)) {
-          todayLogs.push(log);
-        } else {
-          pastLogs.push(log);
-        }
-      });
+    document.getElementById('btnCalendarToday').addEventListener('click', () => {
+      calendarMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+      selectedDate = new Date();
+      updateCalendarView();
+      updateDayEditorView();
+    });
 
-      document.getElementById('todayHeader').textContent = `TODAY'S LOGGED BLOCKS (${todayLogs.length})`;
+    document.getElementById('btnCalendarExportWeek').addEventListener('click', () => {
+      openExcelExportModal(selectedDate);
+    });
 
-      // Render Today
-      if (todayLogs.length === 0) {
-        todayList.innerHTML = `<div class="empty-state">No blocks logged yet today.<br>Tap Check-in or start the interval timer!</div>`;
-      } else {
-        todayList.innerHTML = todayLogs.map(l => createLogHtml(l, true)).join('');
-      }
+    document.getElementById('btnAddBlockForDay').addEventListener('click', () => {
+      openCheckInModal(selectedDate);
+    });
 
-      // Render Past
-      if (pastLogs.length > 0) {
-        pastContainer.style.display = 'flex';
-        document.getElementById('pastHeader').textContent = `PREVIOUS LOGGED BLOCKS (${pastLogs.length})`;
-        pastList.innerHTML = pastLogs.map(l => createLogHtml(l, false)).join('');
-      } else {
-        pastContainer.style.display = 'none';
-      }
-
-      // Attach delete handlers
-      document.querySelectorAll('.btn-delete').forEach(btn => {
-        btn.addEventListener('click', async (e) => {
-          const id = e.currentTarget.getAttribute('data-id');
-          if (confirm('Delete this logged block?')) {
-            await deleteLog(id);
-          }
-        });
-      });
-    }
-
-    function createLogHtml(log, isCurrentDay) {
+    // --- HTML Template for Log Items ---
+    function createLogItemHtml(log, isDayOnly = false) {
       const id = log.id || log.Id;
-      const category = log.category || log.Category || 'General Work';
-      const description = log.description || log.Description || '';
-      const duration = log.duration || log.Duration || '00:30:00';
-      const date = parseDate(log.timestamp || log.Timestamp);
-      const color = getCategoryColor(category);
-      const timeStr = isCurrentDay ? formatTime(date) : formatShortDate(date);
-
-      // Duration label (e.g. "30m" or "1h")
-      const hours = parseDurationHours(duration);
+      const cat = log.category || log.Category || 'Feature Development & Coding';
+      const desc = log.description || log.Description || '';
+      const dur = log.duration || log.Duration || '00:30:00';
+      const d = parseDate(log.timestamp || log.Timestamp);
+      const hours = parseDurationHours(dur);
       const durLabel = hours >= 1 ? `${hours}h` : `${Math.round(hours * 60)}m`;
 
+      const timeFormatted = isDayOnly
+        ? d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
+        : d.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+
       return `
-        <div class="log-item">
-          <div class="log-strip" style="background: ${color};"></div>
-          <div class="log-content">
-            <div class="log-meta">
-              <span class="log-cat" style="color: ${color};">${category}</span>
-              <span class="log-time">• ${timeStr}</span>
+        <div class="activity-log-item" data-log-id="${id}">
+          <div class="log-item-details">
+            <div class="log-item-meta">
+              <span class="cat-badge-pill">${escapeHtml(cat)}</span>
+              <span class="log-time-text">• ${timeFormatted}</span>
+              <span class="log-dur-text">• ${durLabel}</span>
             </div>
-            ${description ? `<div class="log-desc">${escapeHtml(description)}</div>` : ''}
+            ${desc ? `<div class="log-desc-text">${escapeHtml(desc)}</div>` : ''}
           </div>
-          <div class="log-duration">${durLabel}</div>
-          <button class="btn-delete" data-id="${id}" title="Delete block">🗑️</button>
+          <div class="log-item-actions">
+            <button class="btn btn-icon-only btn-edit-log" data-id="${id}" title="Edit this entry">✏️</button>
+            <button class="btn btn-icon-only btn-delete-log" data-id="${id}" title="Delete this entry">🗑️</button>
+          </div>
         </div>
       `;
     }
 
-    function escapeHtml(str) {
-      return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    function attachLogItemEvents(container) {
+      container.querySelectorAll('.btn-delete-log').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+          const id = e.currentTarget.getAttribute('data-id');
+          if (confirm('Delete this logged work block?')) {
+            await deleteLog(id);
+          }
+        });
+      });
+
+      container.querySelectorAll('.btn-edit-log').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const id = e.currentTarget.getAttribute('data-id');
+          const log = allLogs.find(l => (l.id || l.Id) === id);
+          if (log) openEditModal(log);
+        });
+      });
     }
 
     async function deleteLog(id) {
@@ -1081,40 +2357,73 @@
         const res = await apiRequest(`/api/logs/${id}`, { method: 'DELETE' });
         if (res.ok) {
           allLogs = allLogs.filter(l => (l.id || l.Id) !== id);
-          renderLogs();
-          updateDailyGoal();
-          showToast('Block deleted.');
+          updateTodaySummaryInTracker();
+          if (activeView === 'viewDashboard') updateDashboardView();
+          if (activeView === 'viewCalendar') {
+            updateCalendarView();
+            updateDayEditorView();
+          }
+          showToast('Work block deleted.');
         } else {
-          showToast('Failed to delete block.');
+          showToast('Failed to delete work block.');
         }
       } catch (err) {
-        showToast('Error deleting block: ' + err.message);
+        showToast('Error deleting: ' + err.message);
       }
     }
 
-    // --- Record / Check-in ---
-    const checkInModal = document.getElementById('checkInModal');
-    function openCheckInModal() {
-      checkInModal.classList.add('active');
-      document.getElementById('inputDescription').focus();
-    }
-    function closeCheckInModal() {
-      checkInModal.classList.remove('active');
+    // ========================================================
+    // CHECK-IN / ADD BLOCK MODAL LOGIC
+    // ========================================================
+    const modalCheckIn = document.getElementById('modalCheckIn');
+    let checkInTargetDate = null;
+
+    function openCheckInModal(targetDate = null) {
+      checkInTargetDate = targetDate || new Date();
+      modalCheckIn.classList.add('active');
+      document.getElementById('inputCheckInDescription').value = '';
+      document.getElementById('inputCheckInDescription').focus();
     }
 
-    document.getElementById('btnOpenCheckIn').addEventListener('click', openCheckInModal);
+    function closeCheckInModal() {
+      modalCheckIn.classList.remove('active');
+    }
+
+    document.getElementById('btnTopCheckIn').addEventListener('click', () => openCheckInModal());
+    document.getElementById('btnPromptNow').addEventListener('click', () => openCheckInModal());
     document.getElementById('btnCloseCheckIn').addEventListener('click', closeCheckInModal);
     document.getElementById('btnCancelCheckIn').addEventListener('click', closeCheckInModal);
 
+    // Duration chips
+    document.querySelectorAll('#checkInDurationChips .duration-chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        document.querySelectorAll('#checkInDurationChips .duration-chip').forEach(c => c.classList.remove('selected'));
+        chip.classList.add('selected');
+        selectedDurationMins = parseInt(chip.getAttribute('data-mins'), 10) || 30;
+      });
+    });
+
+    document.getElementById('btnCheckInSnooze').addEventListener('click', () => {
+      closeCheckInModal();
+      showToast('Snoozed check-in for 5 minutes.');
+    });
+
     document.getElementById('btnSaveCheckIn').addEventListener('click', async () => {
-      const category = document.getElementById('inputCategory').value;
-      const description = document.getElementById('inputDescription').value.trim();
+      const category = document.getElementById('inputCheckInCategory').value;
+      const description = document.getElementById('inputCheckInDescription').value.trim();
       const minutes = selectedDurationMins;
 
       const durStr = `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}:00`;
+      
+      const logDate = checkInTargetDate || new Date();
+      // If adding for another day, set reasonable time if current time is outside day
+      const now = new Date();
+      const timestamp = new Date(logDate);
+      timestamp.setHours(now.getHours(), now.getMinutes(), now.getSeconds(), 0);
+
       const newLog = {
         id: crypto.randomUUID ? crypto.randomUUID() : ('log_' + Date.now()),
-        timestamp: new Date().toISOString(),
+        timestamp: timestamp.toISOString(),
         duration: durStr,
         category: category,
         description: description
@@ -1128,10 +2437,13 @@
 
         if (res.ok) {
           allLogs.unshift(newLog);
-          renderLogs();
-          updateDailyGoal();
           closeCheckInModal();
-          document.getElementById('inputDescription').value = '';
+          updateTodaySummaryInTracker();
+          if (activeView === 'viewDashboard') updateDashboardView();
+          if (activeView === 'viewCalendar') {
+            updateCalendarView();
+            updateDayEditorView();
+          }
           showToast(`Logged ${minutes}m of ${category}!`);
         } else {
           showToast('Failed to save log to server.');
@@ -1141,73 +2453,121 @@
       }
     });
 
-    // --- Settings & API Key Modal ---
-    const settingsModal = document.getElementById('settingsModal');
-    document.getElementById('btnSettingsModal').addEventListener('click', () => {
-      document.getElementById('inputApiKey').value = apiKey;
-      document.getElementById('testConnectionStatus').style.display = 'none';
-      settingsModal.classList.add('active');
-    });
-    document.getElementById('btnCloseSettings').addEventListener('click', () => settingsModal.classList.remove('active'));
+    // ========================================================
+    // EDIT LOG MODAL LOGIC
+    // ========================================================
+    const modalEditLog = document.getElementById('modalEditLog');
 
-    document.getElementById('btnTestConn').addEventListener('click', async () => {
-      const testKey = document.getElementById('inputApiKey').value.trim();
-      const statusEl = document.getElementById('testConnectionStatus');
-      statusEl.style.display = 'block';
-      statusEl.textContent = 'Testing connection...';
-      statusEl.style.color = '#888888';
+    function openEditModal(log) {
+      document.getElementById('editLogId').value = log.id || log.Id;
+      document.getElementById('inputEditCategory').value = log.category || log.Category || '';
+      document.getElementById('inputEditDescription').value = log.description || log.Description || '';
+
+      const d = parseDate(log.timestamp || log.Timestamp);
+      const hoursStr = String(d.getHours()).padStart(2, '0');
+      const minsStr = String(d.getMinutes()).padStart(2, '0');
+      document.getElementById('inputEditTime').value = `${hoursStr}:${minsStr}`;
+
+      const totalH = parseDurationHours(log.duration || log.Duration);
+      const totalM = Math.round(totalH * 60);
+      document.getElementById('inputEditDuration').value = totalM;
+
+      modalEditLog.classList.add('active');
+    }
+
+    function closeEditModal() {
+      modalEditLog.classList.remove('active');
+    }
+
+    document.getElementById('btnCloseEditLog').addEventListener('click', closeEditModal);
+    document.getElementById('btnCancelEditLog').addEventListener('click', closeEditModal);
+
+    document.getElementById('btnSaveEditLog').addEventListener('click', async () => {
+      const id = document.getElementById('editLogId').value;
+      const log = allLogs.find(l => (l.id || l.Id) === id);
+      if (!log) return;
+
+      const category = document.getElementById('inputEditCategory').value;
+      const description = document.getElementById('inputEditDescription').value.trim();
+      const minutes = parseInt(document.getElementById('inputEditDuration').value, 10) || 30;
+
+      const timeVal = document.getElementById('inputEditTime').value.trim();
+      let updatedDate = parseDate(log.timestamp || log.Timestamp);
+      if (timeVal.includes(':')) {
+        const parts = timeVal.split(':');
+        const h = parseInt(parts[0], 10);
+        const m = parseInt(parts[1], 10);
+        if (!isNaN(h) && !isNaN(m)) {
+          updatedDate.setHours(h, m, 0, 0);
+        }
+      }
+
+      const durStr = `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}:00`;
+
+      const updatedLog = {
+        ...log,
+        id: id,
+        timestamp: updatedDate.toISOString(),
+        duration: durStr,
+        category: category,
+        description: description
+      };
 
       try {
-        const res = await fetch(`/api/logs?key=${encodeURIComponent(testKey)}`, {
-          headers: { 'X-API-Key': testKey }
+        const res = await apiRequest('/api/logs', {
+          method: 'POST',
+          body: JSON.stringify([updatedLog])
         });
 
         if (res.ok) {
-          statusEl.textContent = '✓ Successfully connected to WorkTimeTracker Docker Server!';
-          statusEl.style.color = '#57d9a3';
-        } else if (res.status === 401) {
-          statusEl.textContent = '✗ 401 Unauthorized: Invalid API Key.';
-          statusEl.style.color = '#ea4335';
+          const idx = allLogs.findIndex(l => (l.id || l.Id) === id);
+          if (idx !== -1) allLogs[idx] = updatedLog;
+
+          closeEditModal();
+          updateTodaySummaryInTracker();
+          if (activeView === 'viewDashboard') updateDashboardView();
+          if (activeView === 'viewCalendar') {
+            updateCalendarView();
+            updateDayEditorView();
+          }
+          showToast('Log entry updated successfully.');
         } else {
-          statusEl.textContent = `✗ Server returned HTTP ${res.status}.`;
-          statusEl.style.color = '#ea4335';
+          showToast('Failed to update log entry.');
         }
       } catch (err) {
-        statusEl.textContent = '✗ Connection failed: ' + err.message;
-        statusEl.style.color = '#ea4335';
+        showToast('Error updating: ' + err.message);
       }
     });
 
-    document.getElementById('btnSaveSettings').addEventListener('click', () => {
-      apiKey = document.getElementById('inputApiKey').value.trim();
-      localStorage.setItem('wtt_api_key', apiKey);
-      settingsModal.classList.remove('active');
-      showToast('API Key saved!');
-      fetchLogs();
-    });
+    // ========================================================
+    // EXCEL EXPORT MODAL LOGIC
+    // ========================================================
+    const modalExport = document.getElementById('modalExport');
+    let exportBaseDate = new Date();
 
-    document.getElementById('btnRefresh').addEventListener('click', () => {
-      fetchLogs();
-      showToast('Refreshed logs from server.');
-    });
+    function openExcelExportModal(date = null) {
+      exportBaseDate = date || new Date();
+      modalExport.classList.add('active');
+    }
 
-    // --- Excel Export Modal ---
-    const exportModal = document.getElementById('exportModal');
-    document.getElementById('btnExportModal').addEventListener('click', () => {
-      exportModal.classList.add('active');
-    });
-    document.getElementById('btnCloseExport').addEventListener('click', () => exportModal.classList.remove('active'));
-    document.getElementById('btnCancelExport').addEventListener('click', () => exportModal.classList.remove('active'));
+    function closeExcelExportModal() {
+      modalExport.classList.remove('active');
+    }
+
+    document.getElementById('btnOpenExportModal').addEventListener('click', () => openExcelExportModal());
+    document.getElementById('btnCloseExport').addEventListener('click', closeExcelExportModal);
+    document.getElementById('btnCancelExport').addEventListener('click', closeExcelExportModal);
 
     const exportSelect = document.getElementById('exportWeekSelect');
     const customDateGroup = document.getElementById('customDateGroup');
+
     exportSelect.addEventListener('change', () => {
       customDateGroup.style.display = exportSelect.value === 'custom' ? 'block' : 'none';
     });
 
     document.getElementById('btnDownloadExcel').addEventListener('click', () => {
       const mode = exportSelect.value;
-      let targetDate = new Date();
+      let targetDate = new Date(exportBaseDate);
 
       if (mode === 'previous') {
         targetDate.setDate(targetDate.getDate() - 7);
@@ -1223,15 +2583,69 @@
       const dateStr = targetDate.toISOString().split('T')[0];
       const exportUrl = `/api/export/excel?weekStart=${dateStr}&key=${encodeURIComponent(apiKey)}`;
 
-      // Direct trigger download
       window.location.href = exportUrl;
-      exportModal.classList.remove('active');
-      showToast('Generating Excel report...');
+      closeExcelExportModal();
+      showToast('Generating and downloading Excel report...');
     });
 
-    // --- Initial Load ---
+    // ========================================================
+    // SYNC SETTINGS & API KEY MODAL LOGIC
+    // ========================================================
+    const modalSettings = document.getElementById('modalSettings');
+
+    function openSettingsModal() {
+      document.getElementById('inputApiKey').value = apiKey;
+      document.getElementById('testConnectionStatus').style.display = 'none';
+      modalSettings.classList.add('active');
+    }
+
+    function closeSettingsModal() {
+      modalSettings.classList.remove('active');
+    }
+
+    document.getElementById('btnOpenSyncSettings').addEventListener('click', openSettingsModal);
+    document.getElementById('btnCloseSettings').addEventListener('click', closeSettingsModal);
+    document.getElementById('btnCancelSettings').addEventListener('click', closeSettingsModal);
+
+    document.getElementById('btnTestConn').addEventListener('click', async () => {
+      const testKey = document.getElementById('inputApiKey').value.trim();
+      const statusEl = document.getElementById('testConnectionStatus');
+      statusEl.style.display = 'block';
+      statusEl.textContent = 'Testing connection...';
+      statusEl.style.color = '#888888';
+
+      try {
+        const res = await fetch(`/api/logs?key=${encodeURIComponent(testKey)}`, {
+          headers: { 'X-API-Key': testKey }
+        });
+
+        if (res.ok) {
+          statusEl.textContent = '✓ Successfully connected to WorkTimeTracker Docker Server!';
+          statusEl.style.color = '#57D9A3';
+        } else if (res.status === 401) {
+          statusEl.textContent = '✗ 401 Unauthorized: Invalid API Key.';
+          statusEl.style.color = '#FF6B68';
+        } else {
+          statusEl.textContent = `✗ Server returned HTTP ${res.status}.`;
+          statusEl.style.color = '#FF6B68';
+        }
+      } catch (err) {
+        statusEl.textContent = '✗ Connection failed: ' + err.message;
+        statusEl.style.color = '#FF6B68';
+      }
+    });
+
+    document.getElementById('btnSaveSettings').addEventListener('click', () => {
+      apiKey = document.getElementById('inputApiKey').value.trim();
+      localStorage.setItem('wtt_api_key', apiKey);
+      closeSettingsModal();
+      showToast('API Key saved!');
+      fetchLogs();
+    });
+
+    // --- Initial Application Load ---
     if (!apiKey) {
-      settingsModal.classList.add('active');
+      openSettingsModal();
     } else {
       fetchLogs();
     }
