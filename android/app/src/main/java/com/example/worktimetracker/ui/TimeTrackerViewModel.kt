@@ -19,6 +19,7 @@ import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.UUID
+import android.widget.Toast
 
 enum class AndroidSyncMode {
     LOCAL,
@@ -42,6 +43,9 @@ class TimeTrackerViewModel(application: Application) : AndroidViewModel(applicat
 
     private val _isRunning = MutableStateFlow(true)
     val isRunning: StateFlow<Boolean> = _isRunning.asStateFlow()
+
+    private val _isRefreshing = MutableStateFlow(false)
+    val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
 
     private val _allLogs = MutableStateFlow<List<TimeLog>>(emptyList())
     val allLogs: StateFlow<List<TimeLog>> = _allLogs.asStateFlow()
@@ -266,32 +270,55 @@ class TimeTrackerViewModel(application: Application) : AndroidViewModel(applicat
         refreshLogs()
     }
 
-    fun refreshLogs() {
+    fun refreshLogs(showToast: Boolean = false) {
         viewModelScope.launch {
-            when (_syncMode.value) {
-                AndroidSyncMode.HOME_SERVER -> {
-                    val cached = serverSyncManager.loadFromLocalCache()
-                    if (cached.isNotEmpty()) {
+            _isRefreshing.value = true
+            try {
+                when (_syncMode.value) {
+                    AndroidSyncMode.HOME_SERVER -> {
+                        val cached = serverSyncManager.loadFromLocalCache()
+                        if (cached.isNotEmpty()) {
+                            _allLogs.value = cached
+                        }
+                        _serverSyncStatus.value = "Syncing..."
+                        val res = serverSyncManager.syncLogs(_allLogs.value)
+                        if (res.isSuccess) {
+                            val newLogs = res.getOrNull() ?: _allLogs.value
+                            _allLogs.value = newLogs
+                            _serverSyncStatus.value = "Synced ✓"
+                            if (showToast) {
+                                Toast.makeText(getApplication(), "Synced ${newLogs.size} logs from server", Toast.LENGTH_SHORT).show()
+                            }
+                        } else {
+                            val err = res.exceptionOrNull()?.localizedMessage ?: "Sync failed"
+                            _serverSyncStatus.value = "Offline (Cached)"
+                            if (showToast) {
+                                Toast.makeText(getApplication(), "Server sync offline: $err", Toast.LENGTH_LONG).show()
+                            }
+                        }
+                    }
+                    AndroidSyncMode.GOOGLE_DRIVE -> {
+                        val loaded = driveSyncManager.loadLogs()
+                        _allLogs.value = loaded
+                        _isDriveLinked.value = driveSyncManager.isLinked()
+                        if (showToast) {
+                            Toast.makeText(getApplication(), "Loaded ${loaded.size} logs from Google Drive", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                    AndroidSyncMode.LOCAL -> {
+                        val cached = serverSyncManager.loadFromLocalCache()
                         _allLogs.value = cached
-                    }
-                    _serverSyncStatus.value = "Syncing..."
-                    val res = serverSyncManager.syncLogs(_allLogs.value)
-                    if (res.isSuccess) {
-                        _allLogs.value = res.getOrNull() ?: _allLogs.value
-                        _serverSyncStatus.value = "Synced ✓"
-                    } else {
-                        _serverSyncStatus.value = "Offline (Cached)"
+                        if (showToast) {
+                            Toast.makeText(getApplication(), "Loaded ${cached.size} local logs", Toast.LENGTH_SHORT).show()
+                        }
                     }
                 }
-                AndroidSyncMode.GOOGLE_DRIVE -> {
-                    val loaded = driveSyncManager.loadLogs()
-                    _allLogs.value = loaded
-                    _isDriveLinked.value = driveSyncManager.isLinked()
+            } catch (e: Exception) {
+                if (showToast) {
+                    Toast.makeText(getApplication(), "Refresh error: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
                 }
-                AndroidSyncMode.LOCAL -> {
-                    val cached = serverSyncManager.loadFromLocalCache()
-                    _allLogs.value = cached
-                }
+            } finally {
+                _isRefreshing.value = false
             }
         }
     }

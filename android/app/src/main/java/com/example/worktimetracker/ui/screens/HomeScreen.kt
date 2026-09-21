@@ -27,6 +27,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
@@ -37,6 +38,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -63,9 +65,10 @@ fun HomeScreen(viewModel: TimeTrackerViewModel) {
     val showSyncSettingsDialog by viewModel.showSyncSettingsDialog.collectAsState()
     val serverUrl by viewModel.serverUrl.collectAsState()
     val serverSyncStatus by viewModel.serverSyncStatus.collectAsState()
+    val isRefreshing by viewModel.isRefreshing.collectAsState()
 
-    val todayLogs = viewModel.getTodayLogs()
-    val todayHours = viewModel.getTodayTotalHours()
+    val todayLogs = remember(allLogs) { allLogs.filter { it.isToday() } }
+    val todayHours = remember(todayLogs) { todayLogs.sumOf { it.getDurationHours() } }
     val targetMet = todayHours >= 7.5
 
     // Document Picker for linking Google Drive file
@@ -297,8 +300,9 @@ fun HomeScreen(viewModel: TimeTrackerViewModel) {
                                     fontSize = 13.sp,
                                     color = if (targetMet) Color(0xFF57D9A3) else Color(0xFFFFAA44)
                                 )
+                                val formattedHours = String.format(java.util.Locale.US, "%.1f", todayHours)
                                 Text(
-                                    text = "Today: String.format(\"%.1f\", todayHours)h of 7.5h target (${todayLogs.size} blocks)",
+                                    text = "Today: ${formattedHours}h of 7.5h target (${todayLogs.size} blocks)",
                                     fontSize = 11.sp,
                                     color = Color(0xFFCCCCCC)
                                 )
@@ -367,10 +371,19 @@ fun HomeScreen(viewModel: TimeTrackerViewModel) {
                         )
 
                         IconButton(
-                            onClick = { viewModel.refreshLogs() },
-                            modifier = Modifier.size(24.dp)
+                            onClick = { viewModel.refreshLogs(showToast = true) },
+                            modifier = Modifier.size(36.dp),
+                            enabled = !isRefreshing
                         ) {
-                            Text("↺", color = Color(0xFF888888), fontSize = 15.sp)
+                            if (isRefreshing) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(16.dp),
+                                    strokeWidth = 2.dp,
+                                    color = Color(0xFF0078D4)
+                                )
+                            } else {
+                                Text("↺", color = Color(0xFFCCCCCC), fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                            }
                         }
                     }
                 }
