@@ -32,6 +32,7 @@ namespace WorkTimeTracker
         private DateTime _selectedDate = DateTime.Today;
         private double _previousWidth = 1060;
         private double _previousHeight = 740;
+        private bool _isMiniMode = false;
 
         public MainWindow()
         {
@@ -369,6 +370,7 @@ namespace WorkTimeTracker
         {
             _previousWidth = Width;
             _previousHeight = Height;
+            _isMiniMode = true;
 
             MinWidth = 0;
             MinHeight = 0;
@@ -379,6 +381,7 @@ namespace WorkTimeTracker
             FullModeGrid.Visibility = Visibility.Collapsed;
             MiniModeBorder.Visibility = Visibility.Visible;
             UpdateTrackerUi();
+            Focus();
         }
 
         private void SnapToTopRight()
@@ -396,6 +399,8 @@ namespace WorkTimeTracker
 
         private void OnSwitchToFullModeClick(object sender, RoutedEventArgs e)
         {
+            _isMiniMode = false;
+
             MiniModeBorder.Visibility = Visibility.Collapsed;
             FullModeGrid.Visibility = Visibility.Visible;
 
@@ -405,10 +410,22 @@ namespace WorkTimeTracker
             Height = Math.Max(_previousHeight, 680);
             Topmost = false;
             UpdateTrackerUi();
+            Focus();
+        }
+
+        protected override void OnPreviewKeyDown(KeyEventArgs e)
+        {
+            base.OnPreviewKeyDown(e);
+            if (e.Key == Key.Escape && _isMiniMode)
+            {
+                OnSwitchToFullModeClick(this, new RoutedEventArgs());
+                e.Handled = true;
+            }
         }
 
         private void OnMiniModeDrag(object sender, MouseButtonEventArgs e)
         {
+            Focus();
             if (e.ChangedButton == MouseButton.Left)
             {
                 DragMove();
