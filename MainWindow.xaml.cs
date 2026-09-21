@@ -81,14 +81,16 @@ namespace WorkTimeTracker
         private void UpdateTrackerUi()
         {
             CountdownText.Text = _trackerService.CountdownDisplay;
-            CountdownSubtext.Text = $"remaining until next {_trackerService.IntervalDisplay} check-in prompt";
+            NavCountdownText.Text = _trackerService.CountdownDisplay;
+            CountdownSubtext.Text = $"remaining of {_trackerService.IntervalDisplay} block";
             CycleProgressBar.Value = _trackerService.ProgressPercent;
 
             if (_trackerService.IsRunning)
             {
                 StatusBadge.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#1B3A57"));
                 StatusDot.Fill = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#4CC2FF"));
-                StatusBadgeText.Text = "TRACKING ACTIVE";
+                NavStatusDot.Fill = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#4CC2FF"));
+                StatusBadgeText.Text = "ACTIVE";
                 StatusBadgeText.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#4CC2FF"));
 
                 BtnStart.IsEnabled = false;
@@ -98,7 +100,8 @@ namespace WorkTimeTracker
             {
                 StatusBadge.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#3A2A1A"));
                 StatusDot.Fill = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FFAA44"));
-                StatusBadgeText.Text = "TIMER PAUSED";
+                NavStatusDot.Fill = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FFAA44"));
+                StatusBadgeText.Text = "PAUSED";
                 StatusBadgeText.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FFAA44"));
 
                 BtnStart.IsEnabled = true;
