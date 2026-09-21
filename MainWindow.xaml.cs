@@ -359,6 +359,12 @@ namespace WorkTimeTracker
         private void OnPromptNowClick(object sender, RoutedEventArgs e) => ShowPromptDialog();
 
         // ================= MINI TIMER MODE ("JUST THE TIMER") =================
+        private void OnPinToTopRightModeClick(object sender, RoutedEventArgs e)
+        {
+            OnSwitchToMiniModeClick(sender, e);
+            SnapToTopRight();
+        }
+
         private void OnSwitchToMiniModeClick(object sender, RoutedEventArgs e)
         {
             _previousWidth = Width;
@@ -366,13 +372,26 @@ namespace WorkTimeTracker
 
             MinWidth = 0;
             MinHeight = 0;
-            Width = 320;
-            Height = 72;
+            Width = 345;
+            Height = 74;
             Topmost = true;
 
             FullModeGrid.Visibility = Visibility.Collapsed;
             MiniModeBorder.Visibility = Visibility.Visible;
             UpdateTrackerUi();
+        }
+
+        private void SnapToTopRight()
+        {
+            var workArea = SystemParameters.WorkArea;
+            Left = workArea.Right - Width - 14;
+            Top = workArea.Top + 10;
+            Topmost = true;
+        }
+
+        private void OnSnapToTopRightClick(object sender, RoutedEventArgs e)
+        {
+            SnapToTopRight();
         }
 
         private void OnSwitchToFullModeClick(object sender, RoutedEventArgs e)

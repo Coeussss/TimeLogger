@@ -75,9 +75,9 @@
                         </ui:Button.Icon>
                     </ui:Button>
 
-                    <ui:Button Content="Just Timer" Appearance="Secondary" Click="OnSwitchToMiniModeClick" Margin="0,0,8,0" Padding="12,6" ToolTip="Switch to minimal floating timer widget">
+                    <ui:Button Content="Pin to Top-Right" Appearance="Secondary" Click="OnPinToTopRightModeClick" Margin="0,0,8,0" Padding="12,6" ToolTip="Pin floating mini timer to top-right of screen">
                         <ui:Button.Icon>
-                            <ui:SymbolIcon Symbol="ArrowMinimize24" Foreground="#4CC2FF" />
+                            <ui:SymbolIcon Symbol="Pin24" Foreground="#4CC2FF" />
                         </ui:Button.Icon>
                     </ui:Button>
 
@@ -161,9 +161,9 @@
                                     </ui:Button.Icon>
                                 </ui:Button>
 
-                                <ui:Button Content="Just Timer" Appearance="Secondary" Click="OnSwitchToMiniModeClick" Padding="12,5" ToolTip="Switch to minimal floating timer widget">
+                                <ui:Button Content="Pin to Top-Right" Appearance="Secondary" Click="OnPinToTopRightModeClick" Padding="12,5" ToolTip="Pin floating mini timer to top-right corner">
                                     <ui:Button.Icon>
-                                        <ui:SymbolIcon Symbol="ArrowMinimize24" Foreground="#4CC2FF" FontSize="14" />
+                                        <ui:SymbolIcon Symbol="Pin24" Foreground="#4CC2FF" FontSize="14" />
                                     </ui:Button.Icon>
                                 </ui:Button>
                             </StackPanel>
@@ -735,6 +735,13 @@
 
                 <!-- Right: Mini Controls -->
                 <StackPanel Grid.Row="0" Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                    <!-- Pin to Top-Right -->
+                    <ui:Button Appearance="Secondary" Padding="7,4" Margin="0,0,4,0" Click="OnSnapToTopRightClick" ToolTip="Snap to top-right corner">
+                        <ui:Button.Icon>
+                            <ui:SymbolIcon Symbol="Pin24" Foreground="#4CC2FF" FontSize="12"/>
+                        </ui:Button.Icon>
+                    </ui:Button>
+
                     <!-- Play / Pause -->
                     <ui:Button x:Name="MiniBtnPlayPause" Appearance="Secondary" Padding="7,4" Margin="0,0,4,0" Click="OnMiniPlayPauseClick" ToolTip="Start / Pause">
                         <ui:Button.Icon>
